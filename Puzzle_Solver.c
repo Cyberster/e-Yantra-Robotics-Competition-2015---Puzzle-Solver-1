@@ -564,7 +564,7 @@ void move_one_cell () {
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
-	current_velocity = 150;
+	current_velocity = 100;
 	
 	// forward until detecting 1cm black line
 	while (!((Left_white_line < 20) && (Center_white_line > 20) && (Right_white_line < 20))) { // center on black
@@ -602,7 +602,7 @@ void move_one_cell () {
 	
 	stop();
 	_delay_ms(500);
-	forward_mm(30); // adjust 11 cm forward
+	forward_mm(50); // adjust 11 cm forward
 }
 
 void go_to_cell_no (int target_cell_no) {
@@ -621,7 +621,7 @@ void turn_left () {
 	
 	while (Center_white_line < 20) {
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		left_degrees(2);
+		left_degrees(5);
 	}
 }
 
@@ -631,7 +631,7 @@ void turn_right () {
 	
 	while (Center_white_line < 20) {
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		right_degrees(2);
+		right_degrees(5);
 	}
 }
 
@@ -641,21 +641,21 @@ void turn_right () {
 int main() {
 	init_devices();
 	
-	move_one_cell(); // i.e. go to 9th cell from start
+	/*move_one_cell(); // i.e. go to 9th cell from start
 	_delay_ms(500);
 	change_direction('E');
 	lcd_cursor(2, 1);
 	lcd_wr_char(current_direction);
 	//turn_left();
-	//turn_right();
+	//turn_right();*/
 	
-	/*for (int i=0; i<4; i++) {
+	for (int i=0; i<4; i++) {
 		move_one_cell(); // i.e. go to 9th cell from start
 		_delay_ms(500);
 		//change_direction('E');
 		turn_left();
 		//turn_right();
-	}*/
+	}
 	
 
 	
