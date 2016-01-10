@@ -462,9 +462,9 @@ int d2_position_map[24][2] = {
 	{4, 1},	{4, 2},	{4, 3},	{4, 4},	{4, 5},	{4, 6}
 };
 
-unsigned char current_direction = 'N';			// E/W/N/S
+unsigned char current_direction = 'N';	// E/W/N/S
 unsigned char pickup_direction = 'M';	// initially M
-unsigned char current_velocity = 0;
+unsigned char current_velocity = 0;		// initially 0
 int current_grid = 1;					// 1, 2 i.e. D1, D2
 int current_cell_no = -1;				// initially a invalid one
 int target_cell_no = 9;					// initially 9
@@ -473,23 +473,30 @@ int job_operation = 1;					// 1=pickup, 2=deposit
 
 void follow_black_line (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line) {
 	flag=0;
+	
+	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
+	float left_velocity_float = current_velocity + current_velocity * 7.18/100;
+	float right_velocity_float = current_velocity;
+	unsigned char left_velocity = (unsigned char) left_velocity_float;
+	unsigned char right_velocity = (unsigned char) right_velocity_float;
+	
 		
 	if (((Left_white_line < 20) && (Center_white_line < 20) && (Right_white_line < 20) && flag == 0) || (Center_white_line > 20)) {
 		flag=1;
 		forward();
-		velocity(current_velocity, current_velocity);
+		velocity(left_velocity, right_velocity);
 	}
 
 	if((Left_white_line < 20) && (Center_white_line < 20) && (Right_white_line > 20) && (flag == 0)) {
 		flag=1;
 		forward();
-		velocity(current_velocity+30, current_velocity-50);
+		velocity(left_velocity+30, right_velocity-50);
 	}
 
 	if((Left_white_line > 20) && (Center_white_line < 20) && (Right_white_line < 20) && (flag == 0)) {
 		flag=1;
 		forward();
-		velocity(current_velocity-50, current_velocity+30);
+		velocity(left_velocity-50, right_velocity+30);
 	}
 }
 
@@ -497,41 +504,57 @@ void change_direction (unsigned char desired_direction) {
 	if (current_direction == desired_direction) return;
 	
 	if (current_direction == 'N' && desired_direction == 'W') { // north
-		left_degrees(90);
-		current_direction == 'W';
+		//left_degrees(90);
+		turn_left();
+		current_direction = 'W';
 	} else if (current_direction == 'N' && desired_direction == 'E') { // north
-		right_degrees(90);
-		current_direction == 'E';
+		//right_degrees(90);
+		turn_right();
+		current_direction = 'E';
 	} else if (current_direction == 'N' && desired_direction == 'S') { // north
-		right_degrees(180);
-		current_direction == 'S';
+		//right_degrees(180);
+		turn_right();
+		turn_right();
+		current_direction = 'S';
 	} else if (current_direction == 'S' && desired_direction == 'N') { //south
-		left_degrees(180);
-		current_direction == 'N';
+		//left_degrees(180);
+		turn_left();
+		turn_left();
+		current_direction = 'N';
 	} else if (current_direction == 'S' && desired_direction == 'E') { //south
-		left_degrees(90);
-		current_direction == 'E';
+		//left_degrees(90);
+		turn_left();
+		current_direction = 'E';
 	} else if (current_direction == 'S' && desired_direction == 'W') { //south
-		right_degrees(90);
-		current_direction == 'W';
+		//right_degrees(90);
+		turn_right();
+		current_direction = 'W';
 	} else if (current_direction == 'E' && desired_direction == 'N') { //east
-		left_degrees(90);
-		current_direction == 'N';
+		//left_degrees(90);
+		turn_left();
+		current_direction = 'N';
 	} else if (current_direction == 'E' && desired_direction == 'W') { //east
-		left_degrees(180);
-		current_direction == 'W';
+		//left_degrees(180);
+		turn_left();
+		turn_left();
+		current_direction = 'W';
 	} else if (current_direction == 'E' && desired_direction == 'S') { //east
-		right_degrees(90);
-		current_direction == 'S';
+		//right_degrees(90);
+		turn_right();
+		current_direction = 'S';
 	} else if (current_direction == 'W' && desired_direction == 'N') { //west
-		right_degrees(90);
-		current_direction == 'N';
+		//right_degrees(90);
+		turn_right();
+		current_direction = 'N';
 	} else if (current_direction == 'W' && desired_direction == 'E') { //west
-		left_degrees(180);
-		current_direction == 'E';
+		//left_degrees(180);
+		turn_left();
+		turn_left();
+		current_direction = 'E';
 	} else if (current_direction == 'W' && desired_direction == 'S') { //west
-		left_degrees(90);
-		current_direction == 'S';
+		//left_degrees(90);
+		turn_left();
+		current_direction = 'S';
 	}
 	
 }
@@ -541,10 +564,14 @@ void move_one_cell () {
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
-	current_velocity = 100;
+	current_velocity = 150;
 	
 	// forward until detecting 1cm black line
 	while (!((Left_white_line < 20) && (Center_white_line > 20) && (Right_white_line < 20))) { // center on black
+		print_sensor(1,1,3);	//Prints value of White Line Sensor1
+		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
+		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
+		
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
@@ -552,12 +579,16 @@ void move_one_cell () {
 	}
 			
 	buzzer_on();
-	_delay_ms(100);		//delay
+	_delay_ms(50);		//delay
 	buzzer_off();
-	_delay_ms(100);		//delay
+	_delay_ms(50);		//delay
 		
 	// forward until detecting next 3x3 black box
 	while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
+		print_sensor(1,1,3);	//Prints value of White Line Sensor1
+		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
+		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
+		
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
@@ -565,13 +596,13 @@ void move_one_cell () {
 	}
 		
 	buzzer_on();
-	_delay_ms(250);		//delay
+	_delay_ms(200);		//delay
 	buzzer_off();
-	_delay_ms(250);		//delay
+	_delay_ms(200);		//delay
 	
 	stop();
 	_delay_ms(500);
-	forward_mm(70); // adjust 11 cm forward
+	forward_mm(30); // adjust 11 cm forward
 }
 
 void go_to_cell_no (int target_cell_no) {
@@ -579,34 +610,54 @@ void go_to_cell_no (int target_cell_no) {
 		if (d1_position_map[current_cell_no][0] > d1_position_map[target_cell_no][0]) { // go north until both position on same row
 			change_direction('N');
 			
-			// move one cell and update rotot's status
+			// move one cell and update robot's status
 		}
 	}
 }
 
 void turn_left () {
+	left_degrees(30); // rotate 30 degree to skip current line
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	
 	while (Center_white_line < 20) {
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		left_degrees(5);
+		left_degrees(2);
 	}
 }
 
-void turn_right (unsigned int degrees) {
+void turn_right () {
+	right_degrees(30); // rotate 30 degree to skip current line
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	
+	while (Center_white_line < 20) {
+		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		right_degrees(2);
+	}
 }
 
 // my functions and variables end ##########################################################################
 
 //Main Function
-int main()
-{
+int main() {
 	init_devices();
 	
 	move_one_cell(); // i.e. go to 9th cell from start
 	_delay_ms(500);
-	//change_direction('E');
-	turn_left();
+	change_direction('E');
+	lcd_cursor(2, 1);
+	lcd_wr_char(current_direction);
+	//turn_left();
+	//turn_right();
+	
+	/*for (int i=0; i<4; i++) {
+		move_one_cell(); // i.e. go to 9th cell from start
+		_delay_ms(500);
+		//change_direction('E');
+		turn_left();
+		//turn_right();
+	}*/
+	
+
 	
 	while(1) {
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
@@ -625,27 +676,5 @@ int main()
 		//lcd_cursor(2, 1);
 		//lcd_string(input_str);		
 
-		// handling the start i.e. going to D1, 9th cell (3, 2)
-		if (current_cell_no == -1) {
-			/*follow_black_line(Left_white_line, Center_white_line, Right_white_line, 100);
-		
-			// detecting next 3x3 black box
-			if ((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20)) {
-				stop();
-				// 11 cm is the distance between Castor wheel and center of rear wheels
-				// the robot do not stops where it needs to be stopped, So - adjust 11cm+/-
-				forward_mm(90);
-				
-				// update current position of the robot
-				current_cell_no = 9;
-			}*/
-			//move_one_cell();
-			//current_cell_no = 9;
-		}
-		
-		//go_to_cell_no(0);
-		
-		//follow_black_line(Left_white_line, Center_white_line, Right_white_line);
-		
 	}
 }
