@@ -584,6 +584,17 @@ void go_to_cell_no (int target_cell_no) {
 	}
 }
 
+void turn_left () {
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	while (Center_white_line < 20) {
+		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		left_degrees(5);
+	}
+}
+
+void turn_right (unsigned int degrees) {
+	
+}
 
 // my functions and variables end ##########################################################################
 
@@ -594,7 +605,8 @@ int main()
 	
 	move_one_cell(); // i.e. go to 9th cell from start
 	_delay_ms(500);
-	change_direction('E');
+	//change_direction('E');
+	turn_left();
 	
 	while(1) {
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
