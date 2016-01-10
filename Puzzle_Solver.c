@@ -584,7 +584,9 @@ void move_one_cell () {
 	_delay_ms(50);		//delay
 		
 	// forward until detecting next 3x3 black box
-	while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
+	//while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
+	while (!(((Left_white_line > 20) && (Center_white_line > 20)) || ((Center_white_line > 20) && (Right_white_line > 20))
+			|| ((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line < 20)))) { // center on black
 		print_sensor(1,1,3);	//Prints value of White Line Sensor1
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
 		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
@@ -606,12 +608,32 @@ void move_one_cell () {
 }
 
 void go_to_cell_no (int target_cell_no) {
-	while (d1_position_map[current_cell_no][0] != d1_position_map[target_cell_no][0]) {
-		if (d1_position_map[current_cell_no][0] > d1_position_map[target_cell_no][0]) { // go north until both position on same row
-			change_direction('N');
-			
-			// move one cell and update robot's status
-		}
+	while (d1_position_map[current_cell_no][0] > d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
+		change_direction('N');
+		move_one_cell();
+		current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
+		// move one cell and update robot's status
+	}
+	
+	while (d1_position_map[current_cell_no][0] < d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
+		change_direction('S');
+		move_one_cell();
+		current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
+		// move one cell and update robot's status
+	}
+	
+	while (d1_position_map[current_cell_no][1] > d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
+		change_direction('W');
+		move_one_cell();
+		current_cell_no--; // 8, 4, 0; 9, 5, 1; ...
+		// move one cell and update robot's status
+	}
+	
+	while (d1_position_map[current_cell_no][1] < d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
+		change_direction('E');
+		move_one_cell();
+		current_cell_no--; // 8, 4, 0; 9, 5, 1; ...
+		// move one cell and update robot's status
 	}
 }
 
@@ -641,21 +663,25 @@ void turn_right () {
 int main() {
 	init_devices();
 	
-	/*move_one_cell(); // i.e. go to 9th cell from start
+	move_one_cell(); // i.e. go to 9th cell from start
 	_delay_ms(500);
-	change_direction('E');
-	lcd_cursor(2, 1);
-	lcd_wr_char(current_direction);
-	//turn_left();
-	//turn_right();*/
+	current_cell_no = 9;
 	
-	for (int i=0; i<4; i++) {
+	go_to_cell_no(0);
+	
+	//change_direction('S');
+	//lcd_cursor(2, 1);
+	//lcd_wr_char(current_direction);
+	//turn_left();
+	//turn_right();
+	
+	/*for (int i=0; i<4; i++) {
 		move_one_cell(); // i.e. go to 9th cell from start
 		_delay_ms(500);
 		//change_direction('E');
 		turn_left();
 		//turn_right();
-	}
+	}*/
 	
 
 	
