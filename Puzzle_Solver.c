@@ -121,6 +121,13 @@ void buzzer_pin_config (void)
 	PORTC = PORTC & 0xF7;		//Setting PORTC 3 logic low to turnoff buzzer
 }
 
+//Function to configure Interrupt switch
+void interrupt_switch_config (void)
+{
+	DDRE = DDRE & 0x7F;  //PORTE 7 pin set as input
+	PORTE = PORTE | 0x80; //PORTE7 internal pull-up enabled
+}
+
 //Function to Initialize PORTS
 void port_init()
 {
@@ -130,6 +137,7 @@ void port_init()
 	left_encoder_pin_config(); //left encoder pin config
 	right_encoder_pin_config(); //right encoder pin config
 	buzzer_pin_config();
+	interrupt_switch_config();
 }
 
 void left_position_encoder_interrupt_init (void) //Interrupt 4 enable
@@ -419,19 +427,19 @@ void uart2_init(void)
 }
 
 int counter=0;
-SIGNAL(SIG_USART2_RECV) {		// ISR for receive complete interrupt
-data = UDR2; 				//making copy of data from UDR2 in 'data' variable
-UDR2 = data; 				//echo data back to PC
+	SIGNAL(SIG_USART2_RECV) {		// ISR for receive complete interrupt
+	data = UDR2; 				//making copy of data from UDR2 in 'data' variable
+	UDR2 = data; 				//echo data back to PC
 
-//if (counter < 12) strcat(D1, &data);
-//else strcat(D2, &data);
-strcat(input_str, &data);
+	//if (counter < 12) strcat(D1, &data);
+	//else strcat(D2, &data);
+	strcat(input_str, &data);
 
-//lcd_wr_command(0x01);
-//lcd_cursor(1, 1);
-//lcd_string(data);
-//lcd_wr_char(data);
-counter++;
+	//lcd_wr_command(0x01);
+	//lcd_cursor(1, 1);
+	//lcd_string(data);
+	//lcd_wr_char(data);
+	counter++;
 }
 
 void init_devices (void)
@@ -475,25 +483,25 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 	flag=0;
 	
 	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
-	float left_velocity_float = current_velocity + current_velocity * 7.18/100;
+	float left_velocity_float = current_velocity + current_velocity * 10.18/100;
 	float right_velocity_float = current_velocity;
 	unsigned char left_velocity = (unsigned char) left_velocity_float;
 	unsigned char right_velocity = (unsigned char) right_velocity_float;
 	
 		
-	if (((Left_white_line < 20) && (Center_white_line < 20) && (Right_white_line < 20) && flag == 0) || (Center_white_line > 20)) {
+	if (((Left_white_line <= 16) && (Center_white_line <= 16) && (Right_white_line <= 16) && flag == 0) || (Center_white_line > 16)) {
 		flag=1;
 		forward();
 		velocity(left_velocity, right_velocity);
 	}
 
-	if((Left_white_line < 20) && (Center_white_line < 20) && (Right_white_line > 20) && (flag == 0)) {
+	if((Left_white_line <= 16) && (Center_white_line <= 16) && (Right_white_line > 16) && (flag == 0)) {
 		flag=1;
 		forward();
 		velocity(left_velocity+30, right_velocity-50);
 	}
 
-	if((Left_white_line > 20) && (Center_white_line < 20) && (Right_white_line < 20) && (flag == 0)) {
+	if((Left_white_line > 16) && (Center_white_line <= 16) && (Right_white_line <= 16) && (flag == 0)) {
 		flag=1;
 		forward();
 		velocity(left_velocity-50, right_velocity+30);
@@ -556,27 +564,30 @@ void change_direction (unsigned char desired_direction) {
 		turn_left();
 		current_direction = 'S';
 	}
-	
 }
 
-void move_one_cell () {
+void move_one_cell (unsigned int is_rotated) {
 	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
 	current_velocity = 100;
 	
-	// forward until detecting 1cm black line
-	while (!((Left_white_line < 20) && (Center_white_line > 20) && (Right_white_line < 20))) { // center on black
-		print_sensor(1,1,3);	//Prints value of White Line Sensor1
-		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
-		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
+	if (is_rotated == 0) {
+		// forward until detecting 1cm black line
+		while (!((Left_white_line < 16) && (Center_white_line > 16) && (Right_white_line < 16))) { // center on black		
+			Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+			Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 		
-		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-		follow_black_line(Left_white_line, Center_white_line, Right_white_line);
+			print_sensor(1,1,3);	//Prints value of White Line Sensor1
+			print_sensor(1,5,2);	//Prints Value of White Line Sensor2
+			print_sensor(1,9,1);	//Prints Value of White Line Sensor3		
+		
+			follow_black_line(Left_white_line, Center_white_line, Right_white_line);
+		}		
 	}
+
 			
 	buzzer_on();
 	_delay_ms(50);		//delay
@@ -587,13 +598,14 @@ void move_one_cell () {
 	//while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
 	while (!(((Left_white_line > 20) && (Center_white_line > 20)) || ((Center_white_line > 20) && (Right_white_line > 20))
 			|| ((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line < 20)))) { // center on black
+		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+		
 		print_sensor(1,1,3);	//Prints value of White Line Sensor1
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
 		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
 		
-		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 		follow_black_line(Left_white_line, Center_white_line, Right_white_line);
 	}
 		
@@ -610,38 +622,43 @@ void move_one_cell () {
 void go_to_cell_no (int target_cell_no) {
 	while (d1_position_map[current_cell_no][0] > d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
 		change_direction('N');
-		move_one_cell();
+		move_one_cell(1);
 		current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
 		// move one cell and update robot's status
 	}
 	
 	while (d1_position_map[current_cell_no][0] < d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
 		change_direction('S');
-		move_one_cell();
+		move_one_cell(1);
 		current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
 		// move one cell and update robot's status
 	}
 	
 	while (d1_position_map[current_cell_no][1] > d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
 		change_direction('W');
-		move_one_cell();
-		current_cell_no--; // 8, 4, 0; 9, 5, 1; ...
+		move_one_cell(1);
+		current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 		// move one cell and update robot's status
 	}
 	
 	while (d1_position_map[current_cell_no][1] < d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
 		change_direction('E');
-		move_one_cell();
-		current_cell_no--; // 8, 4, 0; 9, 5, 1; ...
+		move_one_cell(1);
+		current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 		// move one cell and update robot's status
 	}
+	
+	buzzer_on();
+	_delay_ms(1000);
+	buzzer_off();
+	_delay_ms(1000);
 }
 
 void turn_left () {
 	left_degrees(30); // rotate 30 degree to skip current line
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	
-	while (Center_white_line < 20) {
+
+	while (Center_white_line < 16) {
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		left_degrees(5);
 	}
@@ -651,7 +668,7 @@ void turn_right () {
 	right_degrees(30); // rotate 30 degree to skip current line
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	
-	while (Center_white_line < 20) {
+	while (Center_white_line < 16) {
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		right_degrees(5);
 	}
@@ -663,11 +680,98 @@ void turn_right () {
 int main() {
 	init_devices();
 	
-	move_one_cell(); // i.e. go to 9th cell from start
+	/*************************** converting input string to int array start ****************************/
+    int i, j, k, flag;
+    unsigned char * D1_str;
+    unsigned char * D2_str;
+    unsigned char * solutions_str;
+    int D1[12], D2[8], solutions[4][13] = {-1};
+	unsigned int is_rotated;
+
+    for(i=0; i<4; i++) {
+		for (j=0; j<13; j++) {
+			solutions[i][j] = -1;
+		}
+    }
+
+    printf("%s\n", input_str);
+
+	// splitting input_str to three different strings
+	const char delimiter[2] = "#";
+	char *token;
+
+	token = strtok(input_str, delimiter);
+	D1_str = (char *) malloc(sizeof(char) * strlen(token));
+	strcpy(D1_str, token);
+	token = strtok('\0', delimiter);
+	D2_str = (char *) malloc(sizeof(char) * strlen(token));
+	strcpy(D2_str, token);
+	token = strtok('\0', delimiter);
+	solutions_str = (char *) malloc(sizeof(char) * strlen(token));
+	strcpy(solutions_str, token);
+
+	printf("\nD1_str: %s", D1_str);
+	printf("\nD2_str: %s", D2_str);
+	printf("\nsolutions: %s", solutions_str);
+
+	// converting D1_str (string) to D1 (integer)
+    for (i=0; i<12; i++) {
+		char temp[2];
+		strcpy(temp, &D1_str[i]);
+		temp[1] = '\0';
+        D1[i] = atoi(temp);
+    }
+
+    // converting D2_str (string) to D2 (integer)
+    token = strtok(D2_str, ",");
+	int D2_size = 0;
+    while (token != '\0') {
+		D2[D2_size++] = atoi(token);
+		token = strtok('\0', ",");
+    }
+	printf("\n");
+
+	// converting solutions (string) to integer array
+	// 10,7,3;12,9,3;14,8,6
+	char solutions_temp[4][50]; // stores operands for each number of D2 temporarily as string
+
+	token = strtok(solutions_str, ";");
+    i = 0;
+    int no_of_solutions = 0;
+	while (token != '\0') {
+		strcpy(solutions_temp[i++], token);
+		token = strtok('\0', ";");
+		no_of_solutions++;
+	}
+
+	for (i=0; i<no_of_solutions; i++) {
+		j = 0;
+		token = strtok(solutions_temp[i], ",");
+        while (token != '\0') {
+			solutions[i][j++] = atoi(token);
+			token = strtok('\0', ",");
+        }
+	}
+	/*************************** converting input string to int array end ******************************/
+	
+	// make the robot busy until detecting boot switch i.e. interrupt is pressed
+	while (1) {
+		if((PINE | 0x7F) == 0x7F) { // interrupt switch is pressed
+			break;
+		}
+	}	
+	
+	move_one_cell(0); // i.e. go to 9th cell from start
 	_delay_ms(500);
 	current_cell_no = 9;
 	
+	
+	
+	
 	go_to_cell_no(0);
+	go_to_cell_no(3);
+	go_to_cell_no(11);
+	go_to_cell_no(8);
 	
 	//change_direction('S');
 	//lcd_cursor(2, 1);
@@ -699,8 +803,25 @@ int main() {
 		buzzer_off();
 		_delay_ms(250);		//delay*/
 		
-		//lcd_cursor(2, 1);
-		//lcd_string(input_str);		
-
+		lcd_cursor(2, 1);
+		//lcd_string(input_str);	
+		lcd_print(2, 1, D1[0], 2);
+		lcd_print(2, 4, D1[1], 2);
+		lcd_print(2, 7, D1[2], 2);
+		
+		/*move_one_cell(is_rotated); // i.e. go to 9th cell from start
+		_delay_ms(500);
+		//change_direction('E');
+		turn_left();
+		is_rotated = 1;
+		//turn_right();*/
+		
+		/*if((PINE | 0x7F) == 0x7F) { //switch is pressed
+			buzzer_on(); //Turn on buzzer
+			PORTJ = 0xFF; //Turn on bargraph LEDs
+		}  else {
+			buzzer_off(); //Turn off buzzer
+			PORTJ = 0x00; //Turn off bargraph LEDs
+		}*/
 	}
 }
