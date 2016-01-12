@@ -877,12 +877,13 @@ int main() {
 	}
 	/*************************** converting input string to int array end ******************************/
 	
-	/*move_one_cell(0); // i.e. go to 9th cell from start
+	// go to 9th cell from start
+	move_one_cell(0); 
 	_delay_ms(500);
 	current_cell_no = 9;
 	
-	go_to_cell_no(1, 4);
-	pickup();*/
+	//go_to_cell_no(1, 4);
+	//pickup();
 	
 	
 	//change_direction('S');
@@ -940,6 +941,9 @@ int target_grid = 2;					// initially 2
 int target_cell_no = 9;					// initially 9 as start cell
 unsigned char job_operation = 'p';		// p=pickup, d=deposit
 */
+
+	//go_to_cell_no(1, 2);
+	//pickup();
 	
 	// start traversal	
 	//	iterate through all positions
@@ -958,10 +962,22 @@ unsigned char job_operation = 'p';		// p=pickup, d=deposit
 					pickup();				
 				} else { // robot is in D2, need to cross the bridge to go to D1
 					// 1. move to bridge point 6 in D2
-					// 2. go west one cell
-					// 3. update current_grid=1 and current cell=7 (D1 bridge point)
+					go_to_cell_no(2, 6);
+					
+					// 2. go west two cells
+					change_direction('W');
+					move_one_cell(0);
+					move_one_cell(0);
+					
+					// 3. update current_grid=1 and current_cell_no=7 (D1 bridge point)
+					current_grid = 1;
+					current_cell_no = 7;
+					
 					// 4. go_to_cell_no()
+					go_to_cell_no(1, path_points[i]);
+					
 					// 5. pickup
+					pickup();
 				}			
 				
 				print_int_to_pc(path_points[i]);
@@ -969,10 +985,22 @@ unsigned char job_operation = 'p';		// p=pickup, d=deposit
 				// target cell is in D2 i.e. deposit operation
 				
 				// 1. move to bridge point 7 in D1
-				// 2. go east one cell
-				// 3. update current_grid=2 and current cell=6 (D2 bridge point)
+				go_to_cell_no(1, 7);
+				
+				// 2. go east two cells
+				change_direction('E');
+				move_one_cell(0);
+				move_one_cell(0);
+				
+				// 3. update current_grid=2 and current_cell_no=6 (D2 bridge point)
+				current_grid = 2;
+				current_cell_no = 6;
+				
 				// 4. go_to_cell_no()
+				go_to_cell_no(2, path_points[i]);
+				
 				// 5. deposit
+				// deposit();
 			
 				print_int_to_pc(path_points[i]);
 			}
