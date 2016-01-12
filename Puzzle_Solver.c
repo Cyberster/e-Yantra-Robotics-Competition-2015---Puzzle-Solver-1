@@ -36,10 +36,6 @@
    			R-1---->PA2;		R-2---->PA3;
    			PL3 (OC5A) ----> PWM left; 	PL4 (OC5B) ----> PWM right; 
  
- LCD Display interpretation:
- ****************************************************************************
- *LEFT WL SENSOR	CENTER WL SENSOR	RIGHT WL SENSOR		BLANK			*
- *BLANK				BLANK				BLANK				BLANK			*
  ****************************************************************************
 *********************************************************************************/
 
@@ -73,6 +69,60 @@ unsigned char data; //to store received data from UDR1
 unsigned char input_str[100] = ""; // stores the raw input string
 unsigned char D1[12] = ""; // to store D1 array
 unsigned char D2[8] = ""; // to store D2 array
+
+//MOSFET switch port configuration
+void MOSFET_switch_config (void)
+{
+	DDRH = DDRH | 0x0C; //make PORTH 3 and PORTH 1 pins as output
+	PORTH = PORTH & 0xF3; //set PORTH 3 and PORTH 1 pins to 0
+
+	DDRG = DDRG | 0x04; //make PORTG 2 pin as output
+	PORTG = PORTG & 0xFB; //set PORTG 2 pin to 0
+}
+
+void turn_on_sharp234_wl (void) //turn on Sharp IR range sensors 2, 3, 4 and white line sensor's red LED
+{
+	PORTG = PORTG & 0xFB;
+}
+
+void turn_off_sharp234_wl (void) //turn off Sharp IR range sensors 2, 3, 4 and white line sensor's red LED
+{
+	PORTG = PORTG | 0x04;
+}
+
+void turn_on_sharp15 (void) //turn on Sharp IR range sensors 1,5
+{
+	PORTH = PORTH & 0xFB;
+}
+
+void turn_off_sharp15 (void) //turn off Sharp IR range sensors 1,5
+{
+	PORTH = PORTH | 0x04;
+}
+
+void turn_on_ir_proxi_sensors (void) //turn on IR Proximity sensors
+{
+	PORTH = PORTH & 0xF7;
+}
+
+void turn_off_ir_proxi_sensors (void) //turn off IR Proximity sensors
+{
+	PORTH = PORTH | 0x08;
+}
+
+void turn_on_all_proxy_sensors (void) // turn on Sharp 2, 3, 4, red LED of the white line sensors
+// Sharp 1, 5 and IR proximity sensor
+{
+	PORTH = PORTH & 0xF3; //set PORTH 3 and PORTH 1 pins to 0
+	PORTG = PORTG & 0xFB; //set PORTG 2 pin to 0
+}
+
+void turn_off_all_proxy_sensors (void) // turn off Sharp 2, 3, 4, red LED of the white line sensors
+// Sharp 1, 5 and IR proximity sensor
+{
+	PORTH = PORTH | 0x0C; //set PORTH 3 and PORTH 1 pins to 1
+	PORTG = PORTG | 0x04; //set PORTG 2 pin to 1
+}
 
 //Function to configure LCD port
 void lcd_port_config (void)
@@ -131,6 +181,7 @@ void interrupt_switch_config (void)
 //Function to Initialize PORTS
 void port_init()
 {
+	MOSFET_switch_config();
 	lcd_port_config();
 	adc_pin_config();
 	motion_pin_config();	
@@ -349,6 +400,22 @@ void linear_distance_mm(unsigned int DistanceInMM)
 	stop(); //Stop robot
 }
 
+/*void equal_velocity_forward () {
+	ShaftCountRight = 0;
+	ShaftCountLeft = 0;
+	
+	forward();
+	
+	while (1) {
+		while (ShaftCountLeft < ShaftCountRight) {
+			soft_right();
+		}
+		while (ShaftCountLeft > ShaftCountRight) {
+			soft_left();
+		}
+	}
+}*/
+
 void forward_mm(unsigned int DistanceInMM)
 {
 	forward();
@@ -427,7 +494,7 @@ void uart2_init(void)
 }
 
 int counter=0;
-	SIGNAL(SIG_USART2_RECV) {		// ISR for receive complete interrupt
+SIGNAL(SIG_USART2_RECV) {		// ISR for receive complete interrupt
 	data = UDR2; 				//making copy of data from UDR2 in 'data' variable
 	UDR2 = data; 				//echo data back to PC
 
@@ -470,9 +537,9 @@ int d2_position_map[24][2] = {
 	{4, 1},	{4, 2},	{4, 3},	{4, 4},	{4, 5},	{4, 6}
 };
 
+unsigned char current_velocity = 100;	// default velocity 100
 unsigned char current_direction = 'N';	// E/W/N/S
 unsigned char pickup_direction = 'M';	// initially M
-unsigned char current_velocity = 0;		// initially 0
 int current_grid = 1;					// 1, 2 i.e. D1, D2
 int current_cell_no = -1;				// initially a invalid one
 int target_cell_no = 9;					// initially 9
@@ -483,7 +550,7 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 	flag=0;
 	
 	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
-	float left_velocity_float = current_velocity + current_velocity * 10.18/100;
+	float left_velocity_float = current_velocity + current_velocity * 12/100.0;
 	float right_velocity_float = current_velocity;
 	unsigned char left_velocity = (unsigned char) left_velocity_float;
 	unsigned char right_velocity = (unsigned char) right_velocity_float;
@@ -505,6 +572,26 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 		flag=1;
 		forward();
 		velocity(left_velocity-50, right_velocity+30);
+	}
+}
+
+void turn_left () {
+	left_degrees(30); // rotate 30 degree to skip current line
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+
+	while (Center_white_line < 16) {
+		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		left_degrees(5);
+	}
+}
+
+void turn_right () {
+	right_degrees(30); // rotate 30 degree to skip current line
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	
+	while (Center_white_line < 16) {
+		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		right_degrees(5);
 	}
 }
 
@@ -571,10 +658,8 @@ void move_one_cell (unsigned int is_rotated) {
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
-	current_velocity = 100;
-	
 	if (is_rotated == 0) {
-		// forward until detecting 1cm black line
+		// forward until detecting 1cm black line if there is no previous rotation
 		while (!((Left_white_line < 16) && (Center_white_line > 16) && (Right_white_line < 16))) { // center on black		
 			Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
@@ -587,7 +672,6 @@ void move_one_cell (unsigned int is_rotated) {
 			follow_black_line(Left_white_line, Center_white_line, Right_white_line);
 		}		
 	}
-
 			
 	buzzer_on();
 	_delay_ms(50);		//delay
@@ -596,8 +680,8 @@ void move_one_cell (unsigned int is_rotated) {
 		
 	// forward until detecting next 3x3 black box
 	//while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
-	while (!(((Left_white_line > 20) && (Center_white_line > 20)) || ((Center_white_line > 20) && (Right_white_line > 20))
-			|| ((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line < 20)))) { // center on black
+	while (!(((Left_white_line > 16) && (Center_white_line > 16)) || ((Center_white_line > 16) && (Right_white_line > 16)) // 1-2 or 3-2 on white
+			|| ((Left_white_line > 16) && (Center_white_line > 16) && (Right_white_line < 16)))) { // center on black
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
@@ -616,162 +700,151 @@ void move_one_cell (unsigned int is_rotated) {
 	
 	stop();
 	_delay_ms(500);
-	forward_mm(50); // adjust 11 cm forward
+	forward_mm(60); // adjust 11 cm forward
 }
 
-void go_to_cell_no (int target_cell_no) {
+void go_to_cell_no (int target_division, int target_cell_no) {
 	while (d1_position_map[current_cell_no][0] > d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
 		change_direction('N');
+		_delay_ms(500);
 		move_one_cell(1);
+		_delay_ms(500);
 		current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
 		// move one cell and update robot's status
 	}
 	
 	while (d1_position_map[current_cell_no][0] < d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
 		change_direction('S');
+		_delay_ms(500);
 		move_one_cell(1);
+		_delay_ms(500);
 		current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
 		// move one cell and update robot's status
 	}
 	
 	while (d1_position_map[current_cell_no][1] > d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
 		change_direction('W');
+		_delay_ms(500);
 		move_one_cell(1);
+		_delay_ms(500);
 		current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 		// move one cell and update robot's status
 	}
 	
 	while (d1_position_map[current_cell_no][1] < d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
 		change_direction('E');
+		_delay_ms(500);
 		move_one_cell(1);
+		_delay_ms(500);
 		current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 		// move one cell and update robot's status
 	}
 	
 	buzzer_on();
-	_delay_ms(1000);
+	_delay_ms(100);
 	buzzer_off();
+	_delay_ms(100);
+	buzzer_on();
+	_delay_ms(100);
+	buzzer_off();
+	_delay_ms(100);
+}
+
+void pickup () {
+	change_direction('N');
+	_delay_ms(500);
+	forward_mm(50);
+	pickup_direction = current_direction;
 	_delay_ms(1000);
-}
-
-void turn_left () {
-	left_degrees(30); // rotate 30 degree to skip current line
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-
-	while (Center_white_line < 16) {
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		left_degrees(5);
-	}
-}
-
-void turn_right () {
-	right_degrees(30); // rotate 30 degree to skip current line
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	
-	while (Center_white_line < 16) {
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		right_degrees(5);
-	}
+	// turn on the left/right led
+	// do stuff
+	
+	_delay_ms(1000);	
+	back_mm(50);
 }
 
 // my functions and variables end ##########################################################################
+
+// helper/debugger functions start #########################################################################
+void print_str_to_pc (char str[]) {
+	int i;
+	UDR2 = 0x0D;
+	for (i=0; i<strlen(str); i++) {
+		UDR2 = (unsigned char) str[i];
+		_delay_ms(10);
+	}
+}
+
+void print_int_to_pc (int num) {
+	int i;	
+	unsigned char str[10];
+	snprintf(str, 10, "%d", num);
+	
+	UDR2 = 0x0D;
+	for (i=0; i<strlen(str); i++) {
+		UDR2 = (unsigned char) str[i];
+		_delay_ms(10);
+	}
+}
+// helper/debugger functions end ###########################################################################
 
 //Main Function
 int main() {
 	init_devices();
 	
-	/*************************** converting input string to int array start ****************************/
-    int i, j, k, flag;
-    unsigned char * D1_str;
-    unsigned char * D2_str;
-    unsigned char * solutions_str;
-    int D1[12], D2[8], solutions[4][13] = {-1};
-	unsigned int is_rotated;
-
-    for(i=0; i<4; i++) {
-		for (j=0; j<13; j++) {
-			solutions[i][j] = -1;
-		}
-    }
-
-    printf("%s\n", input_str);
-
-	// splitting input_str to three different strings
-	const char delimiter[2] = "#";
-	char *token;
-
-	token = strtok(input_str, delimiter);
-	D1_str = (char *) malloc(sizeof(char) * strlen(token));
-	strcpy(D1_str, token);
-	token = strtok('\0', delimiter);
-	D2_str = (char *) malloc(sizeof(char) * strlen(token));
-	strcpy(D2_str, token);
-	token = strtok('\0', delimiter);
-	solutions_str = (char *) malloc(sizeof(char) * strlen(token));
-	strcpy(solutions_str, token);
-
-	printf("\nD1_str: %s", D1_str);
-	printf("\nD2_str: %s", D2_str);
-	printf("\nsolutions: %s", solutions_str);
-
-	// converting D1_str (string) to D1 (integer)
-    for (i=0; i<12; i++) {
-		char temp[2];
-		strcpy(temp, &D1_str[i]);
-		temp[1] = '\0';
-        D1[i] = atoi(temp);
-    }
-
-    // converting D2_str (string) to D2 (integer)
-    token = strtok(D2_str, ",");
-	int D2_size = 0;
-    while (token != '\0') {
-		D2[D2_size++] = atoi(token);
-		token = strtok('\0', ",");
-    }
-	printf("\n");
-
-	// converting solutions (string) to integer array
-	// 10,7,3;12,9,3;14,8,6
-	char solutions_temp[4][50]; // stores operands for each number of D2 temporarily as string
-
-	token = strtok(solutions_str, ";");
-    i = 0;
-    int no_of_solutions = 0;
-	while (token != '\0') {
-		strcpy(solutions_temp[i++], token);
-		token = strtok('\0', ";");
-		no_of_solutions++;
-	}
-
-	for (i=0; i<no_of_solutions; i++) {
-		j = 0;
-		token = strtok(solutions_temp[i], ",");
-        while (token != '\0') {
-			solutions[i][j++] = atoi(token);
-			token = strtok('\0', ",");
-        }
-	}
-	/*************************** converting input string to int array end ******************************/
+	// save battery by turning off all unnecessary sensors
+	//turn_off_sharp234_wl();
+	//turn_off_sharp15();
 	
 	// make the robot busy until detecting boot switch i.e. interrupt is pressed
 	while (1) {
 		if((PINE | 0x7F) == 0x7F) { // interrupt switch is pressed
 			break;
 		}
-	}	
+	}
 	
-	move_one_cell(0); // i.e. go to 9th cell from start
+	/*************************** converting input string to int array start ****************************/
+    unsigned int i, j, k, flag;
+    unsigned char solutions_str[4][50]; // stores operands for each number of D2 temporarily as string
+    unsigned int no_of_solutions = 0;
+    unsigned char * token;
+    int solutions[4][15] = {-1}; // solutions will be stored in this format: 2,10,2,7,5,3;6,12,0,9,6,3;22,14,1,8,3,6
+
+    for(i=0; i<4; i++) {
+		for (j=0; j<15; j++) {
+			solutions[i][j] = -1;
+		}
+    }
+
+	// converting solutions (string) to integer and store to 2D array solutions[4][15]
+	i = 0;
+	token = strtok(input_str, ";");
+	while (token != '\0') {	
+		strcpy(solutions_str[i++], token);
+		token = strtok('\0', ";");
+		no_of_solutions++;
+	}
+
+	for (i=0; i<no_of_solutions; i++) {
+		j = 0;
+		token = strtok(solutions_str[i], ",");
+        while (token != '\0') {
+	        //print_str_to_pc(token);
+	        //print_int_to_pc(atoi(token));
+			solutions[i][j++] = atoi(token);
+			token = strtok('\0', ",");
+        }
+	}
+	/*************************** converting input string to int array end ******************************/
+	
+	/*move_one_cell(0); // i.e. go to 9th cell from start
 	_delay_ms(500);
 	current_cell_no = 9;
 	
+	go_to_cell_no(1, 4);
+	pickup();*/
 	
-	
-	
-	go_to_cell_no(0);
-	go_to_cell_no(3);
-	go_to_cell_no(11);
-	go_to_cell_no(8);
 	
 	//change_direction('S');
 	//lcd_cursor(2, 1);
@@ -779,49 +852,63 @@ int main() {
 	//turn_left();
 	//turn_right();
 	
-	/*for (int i=0; i<4; i++) {
-		move_one_cell(); // i.e. go to 9th cell from start
-		_delay_ms(500);
-		//change_direction('E');
-		turn_left();
-		//turn_right();
+	//UDR2 = solutions_str[0][1];
+	/*for (i=0; i<4; i++) {
+		//UDR2 = solutions_str[i][1];
+		UDR2 = i + '0';
+		_delay_ms(1);
 	}*/
 	
-
+	/*for (i=0; i<no_of_solutions; i++) {
+		for (j=2; j<15; j+=2) {
+			if (solutions[i][j] != -1)
+				print_int_to_pc(solutions[i][j]);
+		}		
+	}*/
+	
+	// generating paths from input data
+	// following are the data format
+	// data stored as position, value sequence
+	// received data: 2,10,2,7,5,3;6,12,0,9,6,3;22,14,1,8,3,6,7,5 
+	// will become => 2,7,2,10,5,3,2,10,0,9,6,12,6,3,6,12,1,8,22,14,3,6,22,14 as traversal path of the robot
+	int path_points[50]; // -1 refers to invalid/null point; odd index = the point is in D1, even index = the point is in D2
+	for (i=0; i<50; i++) path_points[i] = -1;
+	k = 0;
+	
+	for (i=0; i<no_of_solutions; i++) {
+		for (j=2; j<15; j+=2) {
+			if (solutions[i][j] != -1) {
+				path_points[k++] = solutions[i][j];
+				path_points[k++] = solutions[i][j+1];
+				path_points[k++] = solutions[i][0];
+				path_points[k++] = solutions[i][1];
+			}
+		}
+	}
+	
+	for (i=0; i<50; i++) {
+		if (path_points[i] != -1)
+			print_int_to_pc(path_points[i]);
+	}
 	
 	while(1) {
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 
-		print_sensor(1,1,3);	//Prints value of White Line Sensor1
+		/*print_sensor(1,1,3);	//Prints value of White Line Sensor1
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
-		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
+		print_sensor(1,9,1);	//Prints Value of White Line Sensor3*/
 		
-		/*buzzer_on();
-		_delay_ms(250);		//delay
-		buzzer_off();
-		_delay_ms(250);		//delay*/
+		lcd_cursor(1, 1);
+		lcd_string(input_str);
+				
+		lcd_print(2, 1, solutions[0][1], 2);
+		lcd_print(2, 4, solutions[1][1], 2);
+		lcd_print(2, 7, solutions[2][1], 2);
 		
-		lcd_cursor(2, 1);
-		//lcd_string(input_str);	
-		lcd_print(2, 1, D1[0], 2);
-		lcd_print(2, 4, D1[1], 2);
-		lcd_print(2, 7, D1[2], 2);
+		lcd_print(2, 10, no_of_solutions, 2);
 		
-		/*move_one_cell(is_rotated); // i.e. go to 9th cell from start
-		_delay_ms(500);
-		//change_direction('E');
-		turn_left();
-		is_rotated = 1;
-		//turn_right();*/
 		
-		/*if((PINE | 0x7F) == 0x7F) { //switch is pressed
-			buzzer_on(); //Turn on buzzer
-			PORTJ = 0xFF; //Turn on bargraph LEDs
-		}  else {
-			buzzer_off(); //Turn off buzzer
-			PORTJ = 0x00; //Turn off bargraph LEDs
-		}*/
 	}
 }
