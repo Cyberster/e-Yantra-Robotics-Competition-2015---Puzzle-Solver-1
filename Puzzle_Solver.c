@@ -700,7 +700,7 @@ void move_one_cell (unsigned int is_rotated) {
 	
 	stop();
 	_delay_ms(500);
-	forward_mm(60); // adjust 11 cm forward
+	forward_mm(50); // adjust 11 cm forward
 }
 
 void go_to_cell_no (int target_division, int target_cell_no) {
@@ -833,8 +833,8 @@ int main() {
 	init_devices();
 	
 	// save battery by turning off all unnecessary sensors
-	//turn_off_sharp234_wl();
-	//turn_off_sharp15();
+	turn_off_ir_proxi_sensors();
+	turn_off_sharp15();
 	
 	// make the robot busy until detecting boot switch i.e. interrupt is pressed
 	while (1) {
@@ -876,11 +876,6 @@ int main() {
         }
 	}
 	/*************************** converting input string to int array end ******************************/
-	
-	// go to 9th cell from start
-	move_one_cell(0); 
-	_delay_ms(500);
-	current_cell_no = 9;
 	
 	//go_to_cell_no(1, 4);
 	//pickup();
@@ -931,16 +926,10 @@ int main() {
 			print_int_to_pc(path_points[i]);
 	}*/
 	
-/*
-unsigned char current_velocity = 100;	// default velocity 100
-unsigned char current_direction = 'N';	// E/W/N/S
-unsigned char pickup_direction = 'M';	// initially M
-int current_grid = 1;					// 1, 2 i.e. D1, D2
-int current_cell_no = -1;				// initially a invalid one
-int target_grid = 2;					// initially 2
-int target_cell_no = 9;					// initially 9 as start cell
-unsigned char job_operation = 'p';		// p=pickup, d=deposit
-*/
+	// go to 9th cell from start
+	//move_one_cell(0);
+	//_delay_ms(500);
+	//current_cell_no = 9;
 
 	//go_to_cell_no(1, 2);
 	//pickup();
@@ -953,9 +942,9 @@ unsigned char job_operation = 'p';		// p=pickup, d=deposit
 	
 	for (i=0; i<100; i+=2) {
 		if (path_points[i] != -1) {
-			//print_int_to_pc(path_points[i]);
+			print_int_to_pc(path_points[i]);
 			
-			if (j%2 == 0) { // j is even i.e. position is in D1
+			/*if (j%2 == 0) { // j is even i.e. position is in D1
 				// target cell is in D1 i.e. pickup operation
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
@@ -978,6 +967,7 @@ unsigned char job_operation = 'p';		// p=pickup, d=deposit
 					
 					// 5. pickup
 					pickup();
+					// turn on left LED, show number path_points[i+1] on GLCD
 				}			
 				
 				print_int_to_pc(path_points[i]);
@@ -1001,31 +991,35 @@ unsigned char job_operation = 'p';		// p=pickup, d=deposit
 				
 				// 5. deposit
 				// deposit();
+				// turn off left LED, show Deposited on GLCD
+				// 1000ms buzzer on completion of each solution
 			
 				print_int_to_pc(path_points[i]);
-			}
+			}*/
 			
 			j++;
 		}
 	}
 	
 	while(1) {
+		// continuous buzzer on finished the task
+		
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 
-		/*print_sensor(1,1,3);	//Prints value of White Line Sensor1
+		print_sensor(1,1,3);	//Prints value of White Line Sensor1
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
-		print_sensor(1,9,1);	//Prints Value of White Line Sensor3*/
+		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
 		
-		lcd_cursor(1, 1);
+		/*lcd_cursor(1, 1);
 		lcd_string(input_str);
 				
 		lcd_print(2, 1, solutions[0][1], 2);
 		lcd_print(2, 4, solutions[1][1], 2);
 		lcd_print(2, 7, solutions[2][1], 2);
 		
-		lcd_print(2, 10, no_of_solutions, 2);
+		lcd_print(2, 10, no_of_solutions, 2);*/
 		
 		
 	}
