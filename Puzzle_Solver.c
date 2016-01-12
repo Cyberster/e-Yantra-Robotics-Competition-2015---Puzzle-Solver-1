@@ -704,41 +704,80 @@ void move_one_cell (unsigned int is_rotated) {
 }
 
 void go_to_cell_no (int target_division, int target_cell_no) {
-	while (d1_position_map[current_cell_no][0] > d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
-		change_direction('N');
-		_delay_ms(500);
-		move_one_cell(1);
-		_delay_ms(500);
-		current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
-		// move one cell and update robot's status
-	}
+	if (target_division == 1) { // go to cell no in D1
+		while (d1_position_map[current_cell_no][0] > d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
+			change_direction('N');
+			_delay_ms(500);
+			move_one_cell(1);
+			_delay_ms(500);
+			current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
+			// move one cell and update robot's status
+		}
 	
-	while (d1_position_map[current_cell_no][0] < d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
-		change_direction('S');
-		_delay_ms(500);
-		move_one_cell(1);
-		_delay_ms(500);
-		current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
-		// move one cell and update robot's status
-	}
+		while (d1_position_map[current_cell_no][0] < d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
+			change_direction('S');
+			_delay_ms(500);
+			move_one_cell(1);
+			_delay_ms(500);
+			current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
+			// move one cell and update robot's status
+		}
 	
-	while (d1_position_map[current_cell_no][1] > d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
-		change_direction('W');
-		_delay_ms(500);
-		move_one_cell(1);
-		_delay_ms(500);
-		current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
-		// move one cell and update robot's status
-	}
+		while (d1_position_map[current_cell_no][1] > d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
+			change_direction('W');
+			_delay_ms(500);
+			move_one_cell(1);
+			_delay_ms(500);
+			current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+			// move one cell and update robot's status
+		}
 	
-	while (d1_position_map[current_cell_no][1] < d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
-		change_direction('E');
-		_delay_ms(500);
-		move_one_cell(1);
-		_delay_ms(500);
-		current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
-		// move one cell and update robot's status
+		while (d1_position_map[current_cell_no][1] < d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
+			change_direction('E');
+			_delay_ms(500);
+			move_one_cell(1);
+			_delay_ms(500);
+			current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+			// move one cell and update robot's status
+		}
+	} else { // go to cell no in D2
+		while (d2_position_map[current_cell_no][0] > d2_position_map[target_cell_no][0]) {// go north/south until both position on same row
+			change_direction('N');
+			_delay_ms(500);
+			move_one_cell(1);
+			_delay_ms(500);
+			current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
+			// move one cell and update robot's status
+		}
+	
+		while (d2_position_map[current_cell_no][0] < d2_position_map[target_cell_no][0]) {// go north/south until both position on same row
+			change_direction('S');
+			_delay_ms(500);
+			move_one_cell(1);
+			_delay_ms(500);
+			current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
+			// move one cell and update robot's status
+		}
+	
+		while (d2_position_map[current_cell_no][1] > d2_position_map[target_cell_no][1]) {// go east/west until both position on same column
+			change_direction('W');
+			_delay_ms(500);
+			move_one_cell(1);
+			_delay_ms(500);
+			current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+			// move one cell and update robot's status
+		}
+	
+		while (d2_position_map[current_cell_no][1] < d2_position_map[target_cell_no][1]) {// go east/west until both position on same column
+			change_direction('E');
+			_delay_ms(500);
+			move_one_cell(1);
+			_delay_ms(500);
+			current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+			// move one cell and update robot's status
+		}
 	}
+
 	
 	buzzer_on();
 	_delay_ms(100);
@@ -871,8 +910,8 @@ int main() {
 	// data stored as position, value sequence
 	// received data: 2,10,2,7,5,3;6,12,0,9,6,3;22,14,1,8,3,6,7,5 
 	// will become => 2,7,2,10,5,3,2,10,0,9,6,12,6,3,6,12,1,8,22,14,3,6,22,14 as traversal path of the robot
-	int path_points[50]; // -1 refers to invalid/null point; odd index = the point is in D1, even index = the point is in D2
-	for (i=0; i<50; i++) path_points[i] = -1;
+	int path_points[100]; // -1 refers to invalid/null point; odd index = the point is in D1, even index = the point is in D2
+	for (i=0; i<100; i++) path_points[i] = -1;
 	k = 0;
 	
 	for (i=0; i<no_of_solutions; i++) {
@@ -886,9 +925,60 @@ int main() {
 		}
 	}
 	
-	for (i=0; i<50; i++) {
+	/*for (i=0; i<100; i++) {
 		if (path_points[i] != -1)
 			print_int_to_pc(path_points[i]);
+	}*/
+	
+/*
+unsigned char current_velocity = 100;	// default velocity 100
+unsigned char current_direction = 'N';	// E/W/N/S
+unsigned char pickup_direction = 'M';	// initially M
+int current_grid = 1;					// 1, 2 i.e. D1, D2
+int current_cell_no = -1;				// initially a invalid one
+int target_grid = 2;					// initially 2
+int target_cell_no = 9;					// initially 9 as start cell
+unsigned char job_operation = 'p';		// p=pickup, d=deposit
+*/
+	
+	// start traversal	
+	//	iterate through all positions
+	//	to get value, add 1 to i, e.g.: path_points[i+1]
+	//	use j to count iteration number, even value of j = position is in D1, odd value of j = position is in D2
+	j = 0; // iteration counter
+	
+	for (i=0; i<100; i+=2) {
+		if (path_points[i] != -1) {
+			//print_int_to_pc(path_points[i]);
+			
+			if (j%2 == 0) { // j is even i.e. position is in D1
+				// target cell is in D1 i.e. pickup operation
+				if (current_grid == 1) { // if robot is already in D1
+					go_to_cell_no(1, path_points[i]);
+					pickup();				
+				} else { // robot is in D2, need to cross the bridge to go to D1
+					// 1. move to bridge point 6 in D2
+					// 2. go west one cell
+					// 3. update current_grid=1 and current cell=7 (D1 bridge point)
+					// 4. go_to_cell_no()
+					// 5. pickup
+				}			
+				
+				print_int_to_pc(path_points[i]);
+			} else { // j is odd i.e. position is in D2
+				// target cell is in D2 i.e. deposit operation
+				
+				// 1. move to bridge point 7 in D1
+				// 2. go east one cell
+				// 3. update current_grid=2 and current cell=6 (D2 bridge point)
+				// 4. go_to_cell_no()
+				// 5. deposit
+			
+				print_int_to_pc(path_points[i]);
+			}
+			
+			j++;
+		}
 	}
 	
 	while(1) {
