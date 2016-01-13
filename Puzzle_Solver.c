@@ -868,82 +868,20 @@ int main() {
 	}
 	
 	/*************************** converting input string to int array start ****************************/
-    unsigned int i, j, k, flag;
-    unsigned char solutions_str[4][50]; // stores operands for each number of D2 temporarily as string
-    unsigned int no_of_solutions = 0;
-    unsigned char * token;
-    int solutions[4][15] = {-1}; // solutions will be stored in this format: 2,10,2,7,5,3;6,12,0,9,6,3;22,14,1,8,3,6
-
-    for(i=0; i<4; i++) {
-		for (j=0; j<15; j++) {
-			solutions[i][j] = -1;
-		}
-    }
-
-	// converting solutions (string) to integer and store to 2D array solutions[4][15]
-	i = 0;
-	token = strtok(input_str, ";");
-	while (token != '\0') {	
-		strcpy(solutions_str[i++], token);
-		token = strtok('\0', ";");
-		no_of_solutions++;
-	}
-
-	for (i=0; i<no_of_solutions; i++) {
-		j = 0;
-		token = strtok(solutions_str[i], ",");
-        while (token != '\0') {
-	        //print_str_to_pc(token);
-	        //print_int_to_pc(atoi(token));
-			solutions[i][j++] = atoi(token);
-			token = strtok('\0', ",");
-        }
-	}
-	/*************************** converting input string to int array end ******************************/
-	
-	//go_to_cell_no(1, 4);
-	//pickup();
-	
-	
-	//change_direction('S');
-	//lcd_cursor(2, 1);
-	//lcd_wr_char(current_direction);
-	//turn_left();
-	//turn_right();
-	
-	//UDR2 = solutions_str[0][1];
-	/*for (i=0; i<4; i++) {
-		//UDR2 = solutions_str[i][1];
-		UDR2 = i + '0';
-		_delay_ms(1);
-	}*/
-	
-	/*for (i=0; i<no_of_solutions; i++) {
-		for (j=2; j<15; j+=2) {
-			if (solutions[i][j] != -1)
-				print_int_to_pc(solutions[i][j]);
-		}		
-	}*/
-	
-	// generating paths from input data
-	// following are the data format
-	// data stored as position, value sequence
-	// received data: 2,10,2,7,5,3;6,12,0,9,6,3;22,14,1,8,3,6,7,5 
-	// will become => 2,7,2,10,5,3,2,10,0,9,6,12,6,3,6,12,1,8,22,14,3,6,22,14 as traversal path of the robot
+	int i, j;
 	int path_points[100]; // -1 refers to invalid/null point; odd index = the point is in D1, even index = the point is in D2
 	for (i=0; i<100; i++) path_points[i] = -1;
-	k = 0;
 	
-	for (i=0; i<no_of_solutions; i++) {
-		for (j=2; j<15; j+=2) {
-			if (solutions[i][j] != -1) {
-				path_points[k++] = solutions[i][j];
-				path_points[k++] = solutions[i][j+1];
-				path_points[k++] = solutions[i][0];
-				path_points[k++] = solutions[i][1];
-			}
-		}
+	print_str_to_pc(input_str);
+	
+    unsigned char * token;
+	token = strtok(input_str, ",");
+	i = 0;
+	while (token != '\0') {
+		path_points[i++] = atoi(token);
+		token = strtok('\0', ",");
 	}
+	/*************************** converting input string to int array end ******************************/
 	
 	/*for (i=0; i<100; i++) {
 		if (path_points[i] != -1)
@@ -951,9 +889,9 @@ int main() {
 	}*/
 	
 	// go to 9th cell from start
-	move_one_cell(0);
+	/*move_one_cell(0);
 	_delay_ms(500);
-	current_cell_no = 9;
+	current_cell_no = 9;*/
 
 	//go_to_cell_no(1, 2);
 	//pickup();
@@ -965,10 +903,8 @@ int main() {
 	j = 0; // iteration counter
 	
 	for (i=0; i<100; i+=2) {
-		if (path_points[i] != -1) {
-			print_int_to_pc(path_points[i]);
-			
-			if (j%2 == 0) { // j is even i.e. position is in D1
+		if (path_points[i] != -1) {			
+			/*if (j%2 == 0) { // j is even i.e. position is in D1
 				// target cell is in D1 i.e. pickup operation
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
@@ -1017,9 +953,7 @@ int main() {
 				deposit();
 				// turn off left LED, show Deposited on GLCD
 				// 1000ms buzzer on completion of each solution
-			
-				print_int_to_pc(path_points[i]);
-			}
+			}*/
 			
 			j++;
 		}
