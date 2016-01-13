@@ -537,7 +537,7 @@ int d2_position_map[24][2] = {
 	{4, 1},	{4, 2},	{4, 3},	{4, 4},	{4, 5},	{4, 6}
 };
 
-unsigned char current_velocity = 100;	// default velocity 100
+unsigned char current_velocity = 127;	// default velocity 100
 unsigned char current_direction = 'N';	// E/W/N/S
 int current_grid = 1;					// 1, 2 i.e. D1, D2
 int current_cell_no = -1;				// initially a invalid one
@@ -614,17 +614,13 @@ void change_direction (unsigned char desired_direction) {
 		current_direction = 'E';
 	} else if (current_direction == 'N' && desired_direction == 'S') { // north
 		//right_degrees(180);
-		turn_right();
-		turn_right();
+		turn_left();
+		turn_left();
 		current_direction = 'S';
 	} else if (current_direction == 'S' && desired_direction == 'N') { //south
 		//left_degrees(180);
-		if ((current_grid == 1 && current_cell_no == 11) || (current_grid == 2 && current_cell_no == 23)) { // 
-			turn_left();
-		} else {
-			turn_left();
-			turn_left();
-		}
+		turn_right();
+		turn_right();
 		current_direction = 'N';
 	} else if (current_direction == 'S' && desired_direction == 'E') { //south
 		//left_degrees(90);
@@ -653,8 +649,8 @@ void change_direction (unsigned char desired_direction) {
 		current_direction = 'N';
 	} else if (current_direction == 'W' && desired_direction == 'E') { //west
 		//left_degrees(180);
-		turn_left();
-		turn_left();
+		turn_right();
+		turn_right();
 		current_direction = 'E';
 	} else if (current_direction == 'W' && desired_direction == 'S') { //west
 		//left_degrees(90);
