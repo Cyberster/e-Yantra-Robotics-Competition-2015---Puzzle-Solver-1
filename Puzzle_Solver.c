@@ -539,11 +539,9 @@ int d2_position_map[24][2] = {
 
 unsigned char current_velocity = 100;	// default velocity 100
 unsigned char current_direction = 'N';	// E/W/N/S
-unsigned char pickup_direction = 'M';	// initially M
 int current_grid = 1;					// 1, 2 i.e. D1, D2
 int current_cell_no = -1;				// initially a invalid one
-int target_cell_no = 9;					// initially 9
-int job_operation = 1;					// 1=pickup, 2=deposit
+//int target_cell_no = 9;				// initially 9
 
 
 void follow_black_line (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line) {
@@ -577,20 +575,28 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 
 void turn_left () {
 	left_degrees(30); // rotate 30 degree to skip current line
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+	//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	//Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 
-	while (Center_white_line < 16) {
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	//while (Center_white_line < 16) {
+	while (Left_white_line < 16) {
+		//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		Left_white_line = ADC_Conversion(2);	//Getting data of Left WL Sensor
 		left_degrees(5);
 	}
 }
 
 void turn_right () {
 	right_degrees(30); // rotate 30 degree to skip current line
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	//Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+	//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
-	while (Center_white_line < 16) {
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	//while (Center_white_line < 16) {
+	while (Right_white_line < 16) {
+		//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		Right_white_line = ADC_Conversion(2);	//Getting data of Right WL Sensor
 		right_degrees(5);
 	}
 }
@@ -613,8 +619,12 @@ void change_direction (unsigned char desired_direction) {
 		current_direction = 'S';
 	} else if (current_direction == 'S' && desired_direction == 'N') { //south
 		//left_degrees(180);
-		turn_left();
-		turn_left();
+		if ((current_grid == 1 && current_cell_no == 11) || (current_grid == 2 && current_cell_no == 23)) { // 
+			turn_left();
+		} else {
+			turn_left();
+			turn_left();
+		}
 		current_direction = 'N';
 	} else if (current_direction == 'S' && desired_direction == 'E') { //south
 		//left_degrees(90);
@@ -670,13 +680,15 @@ void move_one_cell (unsigned int is_rotated) {
 			print_sensor(1,9,1);	//Prints Value of White Line Sensor3		
 		
 			follow_black_line(Left_white_line, Center_white_line, Right_white_line);
-		}		
+		}
+		
+		buzzer_on();
+		_delay_ms(50);		//delay
+		buzzer_off();
+		_delay_ms(50);		//delay	
 	}
 			
-	buzzer_on();
-	_delay_ms(50);		//delay
-	buzzer_off();
-	_delay_ms(50);		//delay
+
 		
 	// forward until detecting next 3x3 black box
 	//while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
@@ -700,7 +712,7 @@ void move_one_cell (unsigned int is_rotated) {
 	
 	stop();
 	_delay_ms(500);
-	forward_mm(50); // adjust 11 cm forward
+	forward_mm(25); // adjust 11 cm forward
 }
 
 void go_to_cell_no (int target_division, int target_cell_no) {
@@ -746,7 +758,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			move_one_cell(1);
 			_delay_ms(500);
-			current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
+			current_cell_no -= 6; // 8, 4, 0; 9, 5, 1; ...
 			// move one cell and update robot's status
 		}
 	
@@ -755,7 +767,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			move_one_cell(1);
 			_delay_ms(500);
-			current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
+			current_cell_no += 6; // 8, 4, 0; 9, 5, 1; ...
 			// move one cell and update robot's status
 		}
 	
@@ -792,15 +804,31 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 void pickup () {
 	change_direction('N');
 	_delay_ms(500);
-	forward_mm(50);
-	pickup_direction = current_direction;
-	_delay_ms(1000);
+	//forward_mm(50);
+	//_delay_ms(1000);
 	
 	// turn on the left/right led
 	// do stuff
 	
-	_delay_ms(1000);	
-	back_mm(50);
+	//_delay_ms(1000);
+	buzzer_on();
+	_delay_ms(2000);
+	buzzer_off();
+	_delay_ms(2000);
+	//back_mm(50);
+}
+
+void deposit () {
+	change_direction('N');
+	_delay_ms(500);
+	//forward_mm(50);
+	
+	buzzer_on();
+	_delay_ms(2000);
+	buzzer_off();
+	_delay_ms(2000);
+	
+	//back_mm(50);
 }
 
 // my functions and variables end ##########################################################################
@@ -927,9 +955,9 @@ int main() {
 	}*/
 	
 	// go to 9th cell from start
-	//move_one_cell(0);
-	//_delay_ms(500);
-	//current_cell_no = 9;
+	move_one_cell(0);
+	_delay_ms(500);
+	current_cell_no = 9;
 
 	//go_to_cell_no(1, 2);
 	//pickup();
@@ -944,7 +972,7 @@ int main() {
 		if (path_points[i] != -1) {
 			print_int_to_pc(path_points[i]);
 			
-			/*if (j%2 == 0) { // j is even i.e. position is in D1
+			if (j%2 == 0) { // j is even i.e. position is in D1
 				// target cell is in D1 i.e. pickup operation
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
@@ -990,12 +1018,12 @@ int main() {
 				go_to_cell_no(2, path_points[i]);
 				
 				// 5. deposit
-				// deposit();
+				deposit();
 				// turn off left LED, show Deposited on GLCD
 				// 1000ms buzzer on completion of each solution
 			
 				print_int_to_pc(path_points[i]);
-			}*/
+			}
 			
 			j++;
 		}
@@ -1003,19 +1031,20 @@ int main() {
 	
 	while(1) {
 		// continuous buzzer on finished the task
+		buzzer_on();
 		
-		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+		/*Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 
 		print_sensor(1,1,3);	//Prints value of White Line Sensor1
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
-		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
+		print_sensor(1,9,1);	//Prints Value of White Line Sensor3*/
 		
-		/*lcd_cursor(1, 1);
-		lcd_string(input_str);
+		lcd_cursor(2, 1);
+		lcd_string("Task Completed! :D");
 				
-		lcd_print(2, 1, solutions[0][1], 2);
+		/*lcd_print(2, 1, solutions[0][1], 2);
 		lcd_print(2, 4, solutions[1][1], 2);
 		lcd_print(2, 7, solutions[2][1], 2);
 		
