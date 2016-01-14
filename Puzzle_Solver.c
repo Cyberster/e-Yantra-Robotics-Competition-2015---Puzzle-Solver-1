@@ -554,7 +554,7 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 	unsigned char right_velocity = (unsigned char) right_velocity_float;
 	
 		
-	if (((Left_white_line <= 16) && (Center_white_line <= 16) && (Right_white_line <= 16) && flag == 0) || (Center_white_line > 16)) {
+	if (((Left_white_line <= 16) && (Center_white_line <= 16) && (Right_white_line <= 16)) || (Center_white_line > 16)) {
 		flag=1;
 		forward();
 		velocity(left_velocity, right_velocity);
@@ -666,7 +666,8 @@ void move_one_cell (unsigned int is_rotated) {
 	
 	if (is_rotated == 0) {
 		// forward until detecting 1cm black line if there is no previous rotation
-		while (!((Left_white_line < 16) && (Center_white_line > 16) && (Right_white_line < 16))) { // center on black		
+		//while (!((Left_white_line > 16) || (Center_white_line > 16) || (Right_white_line > 16))) { // center on black	
+		while (!((Left_white_line <= 16) && (Center_white_line > 16) && (Right_white_line <= 16))) { // center on black
 			Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 			Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
@@ -689,7 +690,7 @@ void move_one_cell (unsigned int is_rotated) {
 	// forward until detecting next 3x3 black box
 	//while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
 	while (!(((Left_white_line > 16) && (Center_white_line > 16)) || ((Center_white_line > 16) && (Right_white_line > 16)) // 1-2 or 3-2 on white
-			|| ((Left_white_line > 16) && (Center_white_line > 16) && (Right_white_line < 16)))) { // center on black
+			|| ((Left_white_line > 16) && (Center_white_line > 16) && (Right_white_line > 16)))) { // center on black
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
@@ -883,18 +884,17 @@ int main() {
 	}
 	/*************************** converting input string to int array end ******************************/
 	
-	/*for (i=0; i<100; i++) {
+	/*
+	// testing input data
+	for (i=0; i<100; i++) {
 		if (path_points[i] != -1)
 			print_int_to_pc(path_points[i]);
 	}*/
 	
 	// go to 9th cell from start
-	/*move_one_cell(0);
+	move_one_cell(0);
 	_delay_ms(500);
-	current_cell_no = 9;*/
-
-	//go_to_cell_no(1, 2);
-	//pickup();
+	current_cell_no = 9;
 	
 	// start traversal	
 	//	iterate through all positions
@@ -902,9 +902,9 @@ int main() {
 	//	use j to count iteration number, even value of j = position is in D1, odd value of j = position is in D2
 	j = 0; // iteration counter
 	
-	for (i=0; i<100; i+=2) {
+	/*for (i=0; i<100; i+=2) {
 		if (path_points[i] != -1) {			
-			/*if (j%2 == 0) { // j is even i.e. position is in D1
+			if (j%2 == 0) { // j is even i.e. position is in D1
 				// target cell is in D1 i.e. pickup operation
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
@@ -953,15 +953,15 @@ int main() {
 				deposit();
 				// turn off left LED, show Deposited on GLCD
 				// 1000ms buzzer on completion of each solution
-			}*/
+			}
 			
 			j++;
 		}
-	}
+	}*/
 	
 	while(1) {
 		// continuous buzzer on finished the task
-		buzzer_on();
+		//buzzer_on();
 		
 		/*Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
