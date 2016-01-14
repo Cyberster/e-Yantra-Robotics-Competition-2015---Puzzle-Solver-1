@@ -548,7 +548,7 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 	flag=0;
 	
 	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
-	float left_velocity_float = current_velocity + current_velocity * 12/100.0;
+	float left_velocity_float = current_velocity + current_velocity * 25/100.0;
 	float right_velocity_float = current_velocity;
 	unsigned char left_velocity = (unsigned char) left_velocity_float;
 	unsigned char right_velocity = (unsigned char) right_velocity_float;
@@ -659,12 +659,12 @@ void change_direction (unsigned char desired_direction) {
 	}
 }
 
-void move_one_cell (unsigned int is_rotated) {
+void move_one_cell () {
 	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
-	if (is_rotated == 0) {
+	if (current_cell_no == -1) { // if the robot is in start position
 		// forward until detecting 1cm black line if there is no previous rotation
 		//while (!((Left_white_line > 16) || (Center_white_line > 16) || (Right_white_line > 16))) { // center on black	
 		while (!((Left_white_line <= 16) && (Center_white_line > 16) && (Right_white_line <= 16))) { // center on black
@@ -678,6 +678,8 @@ void move_one_cell (unsigned int is_rotated) {
 		
 			follow_black_line(Left_white_line, Center_white_line, Right_white_line);
 		}
+		//velocity(current_velocity, current_velocity);
+		//forward_mm(20);
 		
 		buzzer_on();
 		_delay_ms(50);		//delay
@@ -717,7 +719,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 		while (d1_position_map[current_cell_no][0] > d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
 			change_direction('N');
 			_delay_ms(500);
-			move_one_cell(1);
+			move_one_cell();
 			_delay_ms(500);
 			current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
 			// move one cell and update robot's status
@@ -726,7 +728,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 		while (d1_position_map[current_cell_no][0] < d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
 			change_direction('S');
 			_delay_ms(500);
-			move_one_cell(1);
+			move_one_cell();
 			_delay_ms(500);
 			current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
 			// move one cell and update robot's status
@@ -735,7 +737,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 		while (d1_position_map[current_cell_no][1] > d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
 			change_direction('W');
 			_delay_ms(500);
-			move_one_cell(1);
+			move_one_cell();
 			_delay_ms(500);
 			current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 			// move one cell and update robot's status
@@ -744,7 +746,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 		while (d1_position_map[current_cell_no][1] < d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
 			change_direction('E');
 			_delay_ms(500);
-			move_one_cell(1);
+			move_one_cell();
 			_delay_ms(500);
 			current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 			// move one cell and update robot's status
@@ -753,7 +755,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 		while (d2_position_map[current_cell_no][0] > d2_position_map[target_cell_no][0]) {// go north/south until both position on same row
 			change_direction('N');
 			_delay_ms(500);
-			move_one_cell(1);
+			move_one_cell();
 			_delay_ms(500);
 			current_cell_no -= 6; // 8, 4, 0; 9, 5, 1; ...
 			// move one cell and update robot's status
@@ -762,7 +764,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 		while (d2_position_map[current_cell_no][0] < d2_position_map[target_cell_no][0]) {// go north/south until both position on same row
 			change_direction('S');
 			_delay_ms(500);
-			move_one_cell(1);
+			move_one_cell();
 			_delay_ms(500);
 			current_cell_no += 6; // 8, 4, 0; 9, 5, 1; ...
 			// move one cell and update robot's status
@@ -771,7 +773,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 		while (d2_position_map[current_cell_no][1] > d2_position_map[target_cell_no][1]) {// go east/west until both position on same column
 			change_direction('W');
 			_delay_ms(500);
-			move_one_cell(1);
+			move_one_cell();
 			_delay_ms(500);
 			current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 			// move one cell and update robot's status
@@ -780,7 +782,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 		while (d2_position_map[current_cell_no][1] < d2_position_map[target_cell_no][1]) {// go east/west until both position on same column
 			change_direction('E');
 			_delay_ms(500);
-			move_one_cell(1);
+			move_one_cell();
 			_delay_ms(500);
 			current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 			// move one cell and update robot's status
@@ -892,9 +894,10 @@ int main() {
 	}*/
 	
 	// go to 9th cell from start
-	move_one_cell(0);
+	move_one_cell();
 	_delay_ms(500);
 	current_cell_no = 9;
+	move_one_cell();
 	
 	// start traversal	
 	//	iterate through all positions
@@ -915,8 +918,8 @@ int main() {
 					
 					// 2. go west two cells
 					change_direction('W');
-					move_one_cell(0);
-					move_one_cell(0);
+					move_one_cell();
+					move_one_cell();
 					
 					// 3. update current_grid=1 and current_cell_no=7 (D1 bridge point)
 					current_grid = 1;
@@ -939,8 +942,8 @@ int main() {
 				
 				// 2. go east two cells
 				change_direction('E');
-				move_one_cell(0);
-				move_one_cell(0);
+				move_one_cell();
+				move_one_cell();
 				
 				// 3. update current_grid=2 and current_cell_no=6 (D2 bridge point)
 				current_grid = 2;
@@ -963,13 +966,13 @@ int main() {
 		// continuous buzzer on finished the task
 		//buzzer_on();
 		
-		/*Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 
 		print_sensor(1,1,3);	//Prints value of White Line Sensor1
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
-		print_sensor(1,9,1);	//Prints Value of White Line Sensor3*/
+		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
 		
 		lcd_cursor(2, 1);
 		lcd_string("Task Completed! :D");
