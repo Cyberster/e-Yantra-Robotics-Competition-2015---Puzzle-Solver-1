@@ -3,3 +3,8 @@ Debug/
 Puzzle_solver.cproj
 
 lcd.h
+delay.c
+delay.h
+glcd.c
+glcd.h
+stdutils.h

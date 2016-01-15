@@ -46,6 +46,8 @@
 
 #include <math.h> //included to support power function
 #include "lcd.h"
+#include "glcd.h"	//User defined LCD library which contains the lcd routines
+#include "glcd.c"
 
 #include <string.h>
 
@@ -515,6 +517,7 @@ void init_devices (void)
 	port_init();
 	lcd_set_4bit();
 	lcd_init();
+	GLCD_Init();
 	uart2_init(); //Initialize UART2 for serial communication
 	adc_init();
 	timer5_init();
@@ -548,7 +551,7 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 	flag=0;
 	
 	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
-	float left_velocity_float = current_velocity + current_velocity * 25/100.0;
+	float left_velocity_float = current_velocity + current_velocity * 12/100.0; // 12 for the old robot
 	float right_velocity_float = current_velocity;
 	unsigned char left_velocity = (unsigned char) left_velocity_float;
 	unsigned char right_velocity = (unsigned char) right_velocity_float;
@@ -580,7 +583,7 @@ void turn_left () {
 	//Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 
 	//while (Center_white_line < 16) {
-	while (Left_white_line < 16) {
+	while (Left_white_line <= 16) {
 		//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Left_white_line = ADC_Conversion(2);	//Getting data of Left WL Sensor
 		left_degrees(5);
@@ -594,7 +597,7 @@ void turn_right () {
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
 	//while (Center_white_line < 16) {
-	while (Right_white_line < 16) {
+	while (Right_white_line <= 16) {
 		//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(2);	//Getting data of Right WL Sensor
 		right_degrees(5);
@@ -684,7 +687,6 @@ void move_one_cell () {
 		buzzer_on();
 		_delay_ms(50);		//delay
 		buzzer_off();
-		_delay_ms(50);		//delay	
 	}
 			
 
@@ -707,11 +709,10 @@ void move_one_cell () {
 	buzzer_on();
 	_delay_ms(200);		//delay
 	buzzer_off();
-	_delay_ms(200);		//delay
 	
-	stop();
-	_delay_ms(500);
-	forward_mm(25); // adjust 11 cm forward
+	//stop();
+	//_delay_ms(500);
+	forward_mm(50); // adjust 11 cm forward
 }
 
 void go_to_cell_no (int target_division, int target_cell_no) {
@@ -797,7 +798,6 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 	buzzer_on();
 	_delay_ms(100);
 	buzzer_off();
-	_delay_ms(100);
 }
 
 void pickup () {
@@ -811,9 +811,8 @@ void pickup () {
 	
 	//_delay_ms(1000);
 	buzzer_on();
-	_delay_ms(2000);
+	_delay_ms(1000);
 	buzzer_off();
-	_delay_ms(2000);
 	//back_mm(50);
 }
 
@@ -823,9 +822,8 @@ void deposit () {
 	//forward_mm(50);
 	
 	buzzer_on();
-	_delay_ms(2000);
+	_delay_ms(1000);
 	buzzer_off();
-	_delay_ms(2000);
 	
 	//back_mm(50);
 }
@@ -886,18 +884,14 @@ int main() {
 	}
 	/*************************** converting input string to int array end ******************************/
 	
-	/*
-	// testing input data
-	for (i=0; i<100; i++) {
-		if (path_points[i] != -1)
-			print_int_to_pc(path_points[i]);
-	}*/
+	GLCD_DisplayString("eYRCPlus-PS1#2678 rocks!!");
 	
-	// go to 9th cell from start
+	/*// go to 9th cell from start
 	move_one_cell();
 	_delay_ms(500);
 	current_cell_no = 9;
-	move_one_cell();
+	//move_one_cell();
+	//move_one_cell();
 	
 	// start traversal	
 	//	iterate through all positions
@@ -905,7 +899,7 @@ int main() {
 	//	use j to count iteration number, even value of j = position is in D1, odd value of j = position is in D2
 	j = 0; // iteration counter
 	
-	/*for (i=0; i<100; i+=2) {
+	for (i=0; i<100; i+=2) {
 		if (path_points[i] != -1) {			
 			if (j%2 == 0) { // j is even i.e. position is in D1
 				// target cell is in D1 i.e. pickup operation
@@ -975,14 +969,6 @@ int main() {
 		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
 		
 		lcd_cursor(2, 1);
-		lcd_string("Task Completed! :D");
-				
-		/*lcd_print(2, 1, solutions[0][1], 2);
-		lcd_print(2, 4, solutions[1][1], 2);
-		lcd_print(2, 7, solutions[2][1], 2);
-		
-		lcd_print(2, 10, no_of_solutions, 2);*/
-		
-		
+		lcd_string("Task Completed! :D");		
 	}
 }
