@@ -180,6 +180,12 @@ void interrupt_switch_config (void)
 	PORTE = PORTE | 0x80; //PORTE7 internal pull-up enabled
 }
 
+//Function to configure LED port i.e. pg0 and pg1 for left and right LEDs respectively
+void LED_pin_config (void) {
+	DDRG |= 0b00000011; // all the LED pin's direction set as output
+	PORTG &= 0b11111100; // all the LED pins are set to logic 0
+}
+
 //Function to Initialize PORTS
 void port_init()
 {
@@ -190,7 +196,36 @@ void port_init()
 	left_encoder_pin_config(); //left encoder pin config
 	right_encoder_pin_config(); //right encoder pin config
 	buzzer_pin_config();
+	LED_pin_config();
 	interrupt_switch_config();
+}
+
+void left_led_on (void) {
+	unsigned char port_restore = 0;
+	port_restore = PING;
+	port_restore |= 0b00000001;
+	PORTG = port_restore;
+}
+
+void left_led_off (void) {
+	unsigned char port_restore = 0;
+	port_restore = PING;
+	port_restore &= 0b11111110;
+	PORTG = port_restore;
+}
+
+void right_led_on (void) {
+	unsigned char port_restore = 0;
+	port_restore = PING;
+	port_restore |= 0b00000010;
+	PORTG = port_restore;
+}
+
+void right_led_off (void) {
+	unsigned char port_restore = 0;
+	port_restore = PING;
+	port_restore &= 0b11111101;
+	PORTG = port_restore;
 }
 
 void left_position_encoder_interrupt_init (void) //Interrupt 4 enable
@@ -897,23 +932,23 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 	buzzer_off();
 }
 
-void pickup () {
+void pickup (int num) {
 	//change_direction('N');
-	_delay_ms(500);
-	//forward_mm(50);
-	//_delay_ms(1000);
+	//_delay_ms(500);
+	forward_mm(50);
+	
+	get_pickup_direction();
+	//GLCD_Printf("#direction: %c", pickup_direction);
 	
 	// turn on the left/right led
-	// do stuff
-	GLCD_DisplayString("picked up");
-	get_pickup_direction();
-	GLCD_Printf("#direction: %c", pickup_direction);
+	if (pickup_direction == 'L') left_led_on();
+	else right_led_on();
 	
-	//_delay_ms(1000);
-	buzzer_on();
+	GLCD_Clear();
+	GLCD_Printf("%d", num);
+	
 	_delay_ms(1000);
-	buzzer_off();
-	//back_mm(50);
+	back_mm(50);
 }
 
 // return L or R i.e. left or right respectively
@@ -956,9 +991,9 @@ void get_pickup_direction () {
 
 void deposit () {
 	// current_direction, current_cell_no, current_coordinate, current_grid, pickup_direction
-	GLCD_Clear();
-	GLCD_Printf("$%d~%d <> %d~%d$", current_coordinate[0], current_coordinate[1], d1_position_map[current_cell_no][1][0], d1_position_map[current_cell_no][1][1]);
-	GLCD_Printf("\ncrnt_cell:%d", current_cell_no);
+	//GLCD_Clear();
+	//GLCD_Printf("$%d~%d <> %d~%d$", current_coordinate[0], current_coordinate[1], d1_position_map[current_cell_no][1][0], d1_position_map[current_cell_no][1][1]);
+	//GLCD_Printf("\ncrnt_cell:%d", current_cell_no);
 	
 	if ((current_coordinate[0] == d1_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][0][1])) {
@@ -1004,15 +1039,15 @@ void deposit () {
 		else change_direction('N');
 	}*/
 	
-	// forward_mm(45);
-	_delay_ms(500);
+	forward_mm(50);
+	
 	//turn off led
-	//GLCD_Clear();
-	GLCD_DisplayString("Deposited");
-	buzzer_on();
+	GLCD_Clear();
+	GLCD_DisplayString("Deposit");
 	_delay_ms(1000);
-	buzzer_off();
-	// back_mm(50);
+	GLCD_Clear();
+	
+	back_mm(50);
 }
 
 // my functions and variables end ##########################################################################
@@ -1084,9 +1119,9 @@ int main() {
 	debug(0);
 	go_to_cell_no(1, 0);
 	//go_to_cell_no(1, 7);
-	pickup();
+	pickup(8);
 	//go_to_cell_no(1, 10);
-	//pickup();
+	//pickup(8);
 	
 	go_to_cell_no(1, 6);
 	deposit();
@@ -1106,7 +1141,7 @@ int main() {
 				// target cell is in D1 i.e. pickup operation
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
-					pickup();				
+					pickup(path_points[i+1]);				
 				} else { // robot is in D2, need to cross the bridge to go to D1
 					// 1. move to bridge point 6 in D2
 					go_to_cell_no(2, 6);
@@ -1124,7 +1159,7 @@ int main() {
 					go_to_cell_no(1, path_points[i]);
 					
 					// 5. pickup
-					pickup();
+					pickup(path_points[i+1]);
 					// turn on left LED, show number path_points[i+1] on GLCD
 				}			
 				
@@ -1170,6 +1205,15 @@ int main() {
 		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
 		
 		lcd_cursor(2, 1);
-		lcd_string("Task Completed! :D");		
+		lcd_string("Task Completed! :D");
+		
+		left_led_on();
+		_delay_ms(500);
+		left_led_off();
+		_delay_ms(500);
+		right_led_on();
+		_delay_ms(500);
+		right_led_off();
+		_delay_ms(500);
 	}
 }
