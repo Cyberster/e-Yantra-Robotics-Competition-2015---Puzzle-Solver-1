@@ -525,27 +525,74 @@ void init_devices (void)
 	right_position_encoder_interrupt_init();
 	sei();   //Enables the global interrupts
 }
+// #########################################################################################################
+// ################################ my functions and variables start #######################################
+// #########################################################################################################
 
-// my functions and variables start ########################################################################
 // mapping cell no as array index with row-column of grids
-int d1_position_map[12][2] = {
-	{1, 1},	{1, 2},	{1, 3},	{1, 4},
-	{2, 1},	{2, 2},	{2, 3},	{2, 4},
-	{3, 1},	{3, 2},	{3, 3},	{3, 4}
+/*int d1_position_map[12][2] = {
+{1, 1},	{1, 2},	{1, 3},	{1, 4},
+{2, 1},	{2, 2},	{2, 3},	{2, 4},
+{3, 1},	{3, 2},	{3, 3},	{3, 4}
 };
 int d2_position_map[24][2] = {
-	{1, 1},	{1, 2},	{1, 3},	{1, 4},	{1, 5},	{1, 6},
-	{2, 1},	{2, 2},	{2, 3},	{2, 4},	{2, 5},	{2, 6},
-	{3, 1},	{3, 2},	{3, 3},	{3, 4},	{3, 5},	{3, 6},
-	{4, 1},	{4, 2},	{4, 3},	{4, 4},	{4, 5},	{4, 6}
+{1, 1},	{1, 2},	{1, 3},	{1, 4},	{1, 5},	{1, 6},
+{2, 1},	{2, 2},	{2, 3},	{2, 4},	{2, 5},	{2, 6},
+{3, 1},	{3, 2},	{3, 3},	{3, 4},	{3, 5},	{3, 6},
+{4, 1},	{4, 2},	{4, 3},	{4, 4},	{4, 5},	{4, 6}
+};*/
+
+// mapping / setting cell co-ordinates in D1
+// 12 cells, 4 points in each cell, 2 index for row-column in each point
+// 4 points for each cell are sorted in this order: top-left, top-right, bottom-right, bottom-left
+int d1_position_map[12][4][2] = {
+	{{0, 0}, {0, 1}, {1, 1}, {1, 0}}, {{0, 1}, {0, 2}, {1, 2}, {1, 1}}, {{0, 2}, {0, 3}, {1, 3}, {1, 2}}, {{0, 3}, {0, 4}, {1, 4}, {1, 3}},
+	{{1, 0}, {1, 1}, {2, 1}, {2, 0}}, {{1, 1}, {1, 2}, {2, 2}, {2, 1}}, {{1, 2}, {1, 3}, {2, 3}, {2, 2}}, {{1, 3}, {1, 4}, {2, 4}, {2, 3}},
+	{{2, 0}, {2, 1}, {3, 1}, {3, 0}}, {{2, 1}, {2, 2}, {3, 2}, {3, 1}}, {{2, 2}, {2, 3}, {3, 3}, {3, 2}}, {{2, 3}, {2, 4}, {3, 4}, {3, 3}}
+};
+
+// mapping / setting cell co-ordinates in D2
+// 24 cells, 4 points in each cell, 2 index for row-column in each point
+// 4 points for each cell are sorted in this order: top-left, top-right, bottom-right, bottom-left
+int d2_position_map[24][4][2] = {
+	{{0, 0}, {0, 1}, {1, 1}, {1, 0}}, {{0, 1}, {0, 2}, {1, 2}, {1, 1}}, {{0, 2}, {0, 3}, {1, 3}, {1, 2}}, {{0, 3}, {0, 4}, {1, 4}, {1, 3}}, {{0, 4}, {0, 5}, {1, 5}, {1, 4}}, {{0, 5}, {0, 6}, {1, 6}, {1, 5}},
+	{{1, 0}, {1, 1}, {2, 1}, {2, 0}}, {{1, 1}, {1, 2}, {2, 2}, {2, 1}}, {{1, 2}, {1, 3}, {2, 3}, {2, 2}}, {{1, 3}, {1, 4}, {2, 4}, {2, 3}}, {{1, 4}, {1, 5}, {2, 5}, {2, 4}}, {{1, 5}, {1, 6}, {2, 6}, {2, 5}},
+	{{2, 0}, {2, 1}, {3, 1}, {3, 0}}, {{2, 1}, {2, 2}, {3, 2}, {3, 1}}, {{2, 2}, {2, 3}, {3, 3}, {3, 2}}, {{2, 3}, {2, 4}, {3, 4}, {3, 3}}, {{2, 4}, {2, 5}, {3, 5}, {3, 4}}, {{2, 5}, {2, 6}, {3, 6}, {3, 5}},
+	{{3, 0}, {3, 1}, {4, 1}, {4, 0}}, {{3, 1}, {3, 2}, {4, 2}, {4, 1}}, {{3, 2}, {3, 3}, {4, 3}, {4, 2}}, {{3, 3}, {3, 4}, {4, 4}, {4, 3}}, {{3, 4}, {3, 5}, {4, 5}, {4, 4}}, {{3, 5}, {3, 6}, {4, 6}, {4, 5}}
 };
 
 unsigned char current_velocity = 127;	// default velocity 100
-unsigned char current_direction = 'N';	// E/W/N/S
-int current_grid = 1;					// 1, 2 i.e. D1, D2
+char current_direction = 'N';	// E/W/N/S
+char pickup_direction = '\0';	// values can be L or R i.e. left or right respectively
+int current_grid = -1;					// 1, 2 i.e. D1, D2, initially invalid
 int current_cell_no = -1;				// initially a invalid one
+int current_coordinate[2] = {-1, -1};	// co-ordinate of the cell, initially invalid
 //int target_cell_no = 9;				// initially 9
 
+// this function receives two points co-ordinates and returns path cost
+int get_path_cost (int current_point[2], int target_point[2]) {
+	int total_cost;	
+	total_cost = abs(current_point[0] - target_point[0]) + abs(current_point[1] - target_point[1]);
+	return total_cost;
+}
+
+// this function receives current point and target cell which contains 4 points
+//	and returns nearest point from current point among those 4 points
+int * get_nearest_point (int current_point[2], int target_cell[4][2]) {
+	int nearest_point[2];
+	int i, current_cost, lowest_cost = 100;
+	
+	for (i=0; i<4; i++) {
+		current_cost = get_path_cost(current_point, target_cell[i]);
+		if (current_cost < lowest_cost) {
+			nearest_point[0] = target_cell[i][0];
+			nearest_point[1] = target_cell[i][1];
+			lowest_cost = current_cost;
+		}
+	}
+	
+	return nearest_point;
+}
 
 void follow_black_line (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line) {
 	flag=0;
@@ -688,9 +735,7 @@ void move_one_cell () {
 		_delay_ms(50);		//delay
 		buzzer_off();
 	}
-			
 
-		
 	// forward until detecting next 3x3 black box
 	//while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
 	while (!(((Left_white_line > 16) && (Center_white_line > 16)) || ((Center_white_line > 16) && (Right_white_line > 16)) // 1-2 or 3-2 on white
@@ -715,82 +760,134 @@ void move_one_cell () {
 	forward_mm(50); // adjust 11 cm forward
 }
 
+void debug (int num) {
+	lcd_print(2, 1, current_coordinate[0], 2);
+	lcd_print(2, 4, current_coordinate[1], 2);
+	lcd_cursor(2, 7);
+	lcd_wr_char(current_direction);
+	lcd_print(1, 14, num, 2);
+	
+	// make the robot busy until detecting boot switch i.e. interrupt is pressed
+	while (1) {
+		if((PINE | 0x7F) == 0x7F) { // interrupt switch is pressed
+			break;
+		}
+	}
+}
+
 void go_to_cell_no (int target_division, int target_cell_no) {
+	const int * nearest_point;
+	nearest_point = (int *) malloc(2 * sizeof(int));
+	
 	if (target_division == 1) { // go to cell no in D1
-		while (d1_position_map[current_cell_no][0] > d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
-			change_direction('N');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
-			// move one cell and update robot's status
-		}
-	
-		while (d1_position_map[current_cell_no][0] < d1_position_map[target_cell_no][0]) {// go north/south until both position on same row
-			change_direction('S');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
-			// move one cell and update robot's status
-		}
-	
-		while (d1_position_map[current_cell_no][1] > d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
+		memcpy(nearest_point, get_nearest_point(current_coordinate, d1_position_map[target_cell_no]), 2 * sizeof(int));
+		lcd_print(2, 11, nearest_point[0], 2);
+		lcd_print(2, 14, nearest_point[1], 2);
+		
+		while (current_coordinate[1] > nearest_point[1]) {// go east/west until both position on same column
 			change_direction('W');
 			_delay_ms(500);
 			move_one_cell();
 			_delay_ms(500);
-			current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+			current_coordinate[1] = current_coordinate[1] - 1;
+			debug(1);
 			// move one cell and update robot's status
 		}
+		
+		//GLCD_SetCursor(1, 1, 1);
+		GLCD_DisplayDecimalNumber(current_coordinate[1], 2);
+		//GLCD_SetCursor(1, 1, 15);
+		GLCD_DisplayDecimalNumber(nearest_point[1], 2);
+		lcd_print(2, 11, nearest_point[0], 2);
+		lcd_print(2, 14, nearest_point[1], 2);
 	
-		while (d1_position_map[current_cell_no][1] < d1_position_map[target_cell_no][1]) {// go east/west until both position on same column
+		while (current_coordinate[1] < nearest_point[1]) {// go east/west until both position on same column
 			change_direction('E');
 			_delay_ms(500);
 			move_one_cell();
 			_delay_ms(500);
-			current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+			current_coordinate[1] = current_coordinate[1] + 1;
+			debug(2);
+			//GLCD_SetCursor(1, 10, 1);
+			//GLCD_DisplayDecimalNumber(current_coordinate[1], 2);
+			//GLCD_SetCursor(1, 10, 15);
+			//GLCD_DisplayDecimalNumber(nearest_point[1], 2);
 			// move one cell and update robot's status
 		}
-	} else { // go to cell no in D2
-		while (d2_position_map[current_cell_no][0] > d2_position_map[target_cell_no][0]) {// go north/south until both position on same row
+		
+		while (current_coordinate[0] > nearest_point[0]) {// go north/south until both position on same row
 			change_direction('N');
 			_delay_ms(500);
 			move_one_cell();
 			_delay_ms(500);
-			current_cell_no -= 6; // 8, 4, 0; 9, 5, 1; ...
+			//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
+			current_coordinate[0] = current_coordinate[0] - 1;
+			debug(3);
 			// move one cell and update robot's status
 		}
 	
-		while (d2_position_map[current_cell_no][0] < d2_position_map[target_cell_no][0]) {// go north/south until both position on same row
+		while (current_coordinate[0] < nearest_point[0]) {// go north/south until both position on same row
 			change_direction('S');
 			_delay_ms(500);
 			move_one_cell();
 			_delay_ms(500);
-			current_cell_no += 6; // 8, 4, 0; 9, 5, 1; ...
+			//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
+			current_coordinate[0] = current_coordinate[0] + 1;
+			debug(4);
 			// move one cell and update robot's status
 		}
-	
-		while (d2_position_map[current_cell_no][1] > d2_position_map[target_cell_no][1]) {// go east/west until both position on same column
+	} else { // go to cell no in D2	
+		memcpy(nearest_point, get_nearest_point(current_coordinate, d2_position_map[target_cell_no]), 2 * sizeof(int));
+		
+		while (current_coordinate[1] > nearest_point[1]) {// go east/west until both position on same column
 			change_direction('W');
 			_delay_ms(500);
 			move_one_cell();
 			_delay_ms(500);
-			current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+			current_coordinate[1] = current_coordinate[1] - 1;
+			debug(5);
 			// move one cell and update robot's status
 		}
 	
-		while (d2_position_map[current_cell_no][1] < d2_position_map[target_cell_no][1]) {// go east/west until both position on same column
+		while (current_coordinate[1] < nearest_point[1]) {// go east/west until both position on same column
 			change_direction('E');
 			_delay_ms(500);
 			move_one_cell();
 			_delay_ms(500);
-			current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+			current_coordinate[1] = current_coordinate[1] + 1;
+			debug(6);
+			// move one cell and update robot's status
+		}
+		
+		while (current_coordinate[0] > nearest_point[0]) {// go north/south until both position on same row
+			change_direction('N');
+			_delay_ms(500);
+			move_one_cell();
+			_delay_ms(500);
+			//current_cell_no -= 6; // 8, 4, 0; 9, 5, 1; ...
+			current_coordinate[0] = current_coordinate[0] - 1;
+			debug(7);
+			// move one cell and update robot's status
+		}
+	
+		while (current_coordinate[0] < nearest_point[0]) {// go north/south until both position on same row
+			change_direction('S');
+			_delay_ms(500);
+			move_one_cell();
+			_delay_ms(500);
+			//current_cell_no += 6; // 8, 4, 0; 9, 5, 1; ...
+			current_coordinate[0] = current_coordinate[0] + 1;
+			debug(8);
 			// move one cell and update robot's status
 		}
 	}
-
 	
+	current_cell_no = target_cell_no;
+
 	buzzer_on();
 	_delay_ms(100);
 	buzzer_off();
@@ -801,13 +898,16 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 }
 
 void pickup () {
-	change_direction('N');
+	//change_direction('N');
 	_delay_ms(500);
 	//forward_mm(50);
 	//_delay_ms(1000);
 	
 	// turn on the left/right led
 	// do stuff
+	GLCD_DisplayString("picked up");
+	get_pickup_direction();
+	GLCD_Printf("#direction: %c", pickup_direction);
 	
 	//_delay_ms(1000);
 	buzzer_on();
@@ -816,16 +916,103 @@ void pickup () {
 	//back_mm(50);
 }
 
-void deposit () {
-	change_direction('N');
-	_delay_ms(500);
-	//forward_mm(50);
+// return L or R i.e. left or right respectively
+void get_pickup_direction () {
+	// current_direction, current_cell_no, current_coordinate, current_grid
+	//char direction;
+	int i, left = 0, right = 0;	
 	
+	if (current_direction == 'N') { // if north, just compare columns
+		for (i=0; i<4; i++) {
+			//GLCD_Printf("@ %d~%d,", current_coordinate[1], d1_position_map[current_cell_no][i][1]);
+			GLCD_Printf("@%1d,%1d-%2d-%1d-%1d,", current_coordinate[0], current_coordinate[1], current_cell_no, i, 1);
+			if (current_coordinate[1] > d1_position_map[current_cell_no][i][1]) left++;
+			else if (current_coordinate[1] < d1_position_map[current_cell_no][i][1]) right++;
+		}
+	} else if (current_direction == 'S') { // if south, just compare columns
+		for (i=0; i<4; i++) {
+			if (current_coordinate[1] > d1_position_map[current_cell_no][i][1]) right++;
+			else if (current_coordinate[1] < d1_position_map[current_cell_no][i][1]) left++;
+		}		
+	} else if (current_direction == 'E') { // if east, just compare rows
+		for (i=0; i<4; i++) {
+			if (current_coordinate[0] > d1_position_map[current_cell_no][i][0]) left++;
+			else if (current_coordinate[0] < d1_position_map[current_cell_no][i][0]) right++;
+		}		
+	} else { // if west, just compare rows
+		for (i=0; i<4; i++) {
+			if (current_coordinate[0] > d1_position_map[current_cell_no][i][0]) right++;
+			else if (current_coordinate[0] < d1_position_map[current_cell_no][i][0]) left++;
+		}		
+	}
+	
+	GLCD_Printf(" #L: %d, R: %d", left, right);
+	
+	if (left > right) pickup_direction = 'L';
+	else pickup_direction = 'R';
+	
+	//return direction;
+}
+
+void deposit () {
+	// current_direction, current_cell_no, current_coordinate, current_grid, pickup_direction
+	GLCD_Clear();
+	GLCD_Printf("$%d~%d <> %d~%d$", current_coordinate[0], current_coordinate[1], d1_position_map[current_cell_no][1][0], d1_position_map[current_cell_no][1][1]);
+	GLCD_Printf("\ncrnt_cell:%d", current_cell_no);
+	
+	if ((current_coordinate[0] == d1_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
+		(current_coordinate[1] == d1_position_map[current_cell_no][0][1])) {
+		debug(1);
+		if (pickup_direction == 'L') change_direction('S');
+		else change_direction('E');
+	} else if ((current_coordinate[0] == d1_position_map[current_cell_no][1][0]) && // current_coordinate is on top right of the cell
+		(current_coordinate[1] == d1_position_map[current_cell_no][1][1])) {
+		debug(2);
+		if (pickup_direction == 'L') change_direction('W');
+		else change_direction('S');
+	} else if ((current_coordinate[0] == d1_position_map[current_cell_no][2][0]) && // current_coordinate is on bottom right of the cell
+		(current_coordinate[1] == d1_position_map[current_cell_no][2][1])) {
+		debug(3);
+		if (pickup_direction == 'L') change_direction('N');
+		else change_direction('W');
+	} else if ((current_coordinate[0] == d1_position_map[current_cell_no][3][0]) && // current_coordinate is on bottom left of the cell
+		(current_coordinate[1] == d1_position_map[current_cell_no][3][1])) {
+		debug(4);
+		if (pickup_direction == 'L') change_direction('E');
+		else change_direction('N');
+	}
+	
+	/*if ((current_coordinate[0] == d2_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
+	(current_coordinate[1] == d2_position_map[current_cell_no][0][1])) {
+		debug(1);
+		if (pickup_direction == 'L') change_direction('S');
+		else change_direction('E');
+	} else if ((current_coordinate[0] == d2_position_map[current_cell_no][1][0]) && // current_coordinate is on top right of the cell
+	(current_coordinate[1] == d2_position_map[current_cell_no][1][1])) {
+		debug(2);
+		if (pickup_direction == 'L') change_direction('W');
+		else change_direction('S');
+	} else if ((current_coordinate[0] == d2_position_map[current_cell_no][2][0]) && // current_coordinate is on bottom right of the cell
+	(current_coordinate[1] == d2_position_map[current_cell_no][2][1])) {
+		debug(3);
+		if (pickup_direction == 'L') change_direction('N');
+		else change_direction('W');
+	} else if ((current_coordinate[0] == d2_position_map[current_cell_no][3][0]) && // current_coordinate is on bottom left of the cell
+	(current_coordinate[1] == d2_position_map[current_cell_no][3][1])) {
+		debug(4);
+		if (pickup_direction == 'L') change_direction('E');
+		else change_direction('N');
+	}*/
+	
+	// forward_mm(45);
+	_delay_ms(500);
+	//turn off led
+	//GLCD_Clear();
+	GLCD_DisplayString("Deposited");
 	buzzer_on();
 	_delay_ms(1000);
 	buzzer_off();
-	
-	//back_mm(50);
+	// back_mm(50);
 }
 
 // my functions and variables end ##########################################################################
@@ -884,15 +1071,29 @@ int main() {
 	}
 	/*************************** converting input string to int array end ******************************/
 	
-	GLCD_DisplayString("eYRCPlus-PS1#2678 rocks!!");
+	//GLCD_DisplayString("eYRCPlus-PS1#2678 rocks!!");
 	
-	/*// go to 9th cell from start
+	// go to 9th cell from start
 	move_one_cell();
 	_delay_ms(500);
-	current_cell_no = 9;
+	current_grid = 1;
+	current_direction = 'N';
+	current_coordinate[0] = 3;
+	current_coordinate[1] = 2;
+
+	debug(0);
+	go_to_cell_no(1, 0);
+	//go_to_cell_no(1, 7);
+	pickup();
+	//go_to_cell_no(1, 10);
+	//pickup();
+	
+	go_to_cell_no(1, 6);
+	deposit();
 	//move_one_cell();
 	//move_one_cell();
 	
+	/*
 	// start traversal	
 	//	iterate through all positions
 	//	to get value, add 1 to i, e.g.: path_points[i+1]
