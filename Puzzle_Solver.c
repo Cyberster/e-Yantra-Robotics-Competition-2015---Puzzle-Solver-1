@@ -604,6 +604,9 @@ int current_cell_no = -1;				// initially a invalid one
 int current_coordinate[2] = {-1, -1};	// co-ordinate of the cell, initially invalid
 //int target_cell_no = 9;				// initially 9
 
+float left_velocity_float, right_velocity_float;
+unsigned char left_velocity, right_velocity;
+
 // this function receives two points co-ordinates and returns path cost
 int get_path_cost (int current_point[2], int target_point[2]) {
 	int total_cost;	
@@ -632,11 +635,11 @@ int * get_nearest_point (int current_point[2], int target_cell[4][2]) {
 void follow_black_line (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line) {
 	flag=0;
 	
-	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
+	/*// left wheel is physically 7.18% slower than the right wheel, so increase velocity
 	float left_velocity_float = current_velocity + current_velocity * 12/100.0; // 12 for the old robot
 	float right_velocity_float = current_velocity;
 	unsigned char left_velocity = (unsigned char) left_velocity_float;
-	unsigned char right_velocity = (unsigned char) right_velocity_float;
+	unsigned char right_velocity = (unsigned char) right_velocity_float;*/
 	
 		
 	if (((Left_white_line <= 16) && (Center_white_line <= 16) && (Right_white_line <= 16)) || (Center_white_line > 16)) {
@@ -690,55 +693,113 @@ void change_direction (unsigned char desired_direction) {
 	if (current_direction == desired_direction) return;
 	
 	if (current_direction == 'N' && desired_direction == 'W') { // north
-		//left_degrees(90);
 		turn_left();
 		current_direction = 'W';
 	} else if (current_direction == 'N' && desired_direction == 'E') { // north
-		//right_degrees(90);
 		turn_right();
 		current_direction = 'E';
 	} else if (current_direction == 'N' && desired_direction == 'S') { // north
-		//right_degrees(180);
-		turn_left();
-		turn_left();
+		if ((current_grid == 1 && (
+		(current_coordinate[0] == 0 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 1 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 2 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 3 && current_coordinate[1] == 0))) ||
+		(current_grid == 2 && (
+		(current_coordinate[0] == 0 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 1 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 2 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 3 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 4 && current_coordinate[1] == 0)))) {
+			turn_right();
+			turn_right();
+		} else {
+			turn_left();
+			turn_left();			
+		}
+
 		current_direction = 'S';
 	} else if (current_direction == 'S' && desired_direction == 'N') { //south
-		//left_degrees(180);
-		turn_right();
-		turn_right();
+		if ((current_grid == 1 && (
+		(current_coordinate[0] == 0 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 1 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 2 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 3 && current_coordinate[1] == 0))) ||
+		(current_grid == 2 && (
+		(current_coordinate[0] == 0 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 1 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 2 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 3 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 4 && current_coordinate[1] == 0)))) {
+			turn_left();
+			turn_left();
+		} else {
+			turn_right();
+			turn_right();
+		}
+		
 		current_direction = 'N';
 	} else if (current_direction == 'S' && desired_direction == 'E') { //south
-		//left_degrees(90);
 		turn_left();
 		current_direction = 'E';
 	} else if (current_direction == 'S' && desired_direction == 'W') { //south
-		//right_degrees(90);
 		turn_right();
 		current_direction = 'W';
 	} else if (current_direction == 'E' && desired_direction == 'N') { //east
-		//left_degrees(90);
 		turn_left();
 		current_direction = 'N';
 	} else if (current_direction == 'E' && desired_direction == 'W') { //east
-		//left_degrees(180);
-		turn_left();
-		turn_left();
+		if ((current_grid == 1 && (
+		(current_coordinate[0] == 0 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 1) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 2) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 3) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 4))) ||
+		(current_grid == 2 && (
+		(current_coordinate[0] == 0 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 1) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 2) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 3) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 4) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 5) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 6)))) {
+			turn_right();
+			turn_right();			
+		} else {
+			turn_left();
+			turn_left();
+		}
+		
 		current_direction = 'W';
 	} else if (current_direction == 'E' && desired_direction == 'S') { //east
-		//right_degrees(90);
 		turn_right();
 		current_direction = 'S';
 	} else if (current_direction == 'W' && desired_direction == 'N') { //west
-		//right_degrees(90);
 		turn_right();
 		current_direction = 'N';
 	} else if (current_direction == 'W' && desired_direction == 'E') { //west
-		//left_degrees(180);
-		turn_right();
-		turn_right();
+		if ((current_grid == 1 && (
+		(current_coordinate[0] == 0 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 1) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 2) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 3) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 4))) ||
+		(current_grid == 2 && (
+		(current_coordinate[0] == 0 && current_coordinate[1] == 0) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 1) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 2) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 3) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 4) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 5) ||
+		(current_coordinate[0] == 0 && current_coordinate[1] == 6)))) {
+			turn_left();
+			turn_left();
+		} else {
+			turn_right();
+			turn_right();
+		}
+		
 		current_direction = 'E';
 	} else if (current_direction == 'W' && desired_direction == 'S') { //west
-		//left_degrees(90);
 		turn_left();
 		current_direction = 'S';
 	}
@@ -749,7 +810,7 @@ void move_one_cell () {
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
-	if (current_cell_no == -1) { // if the robot is in start position
+	/*if (current_cell_no == -1) { // if the robot is in start position
 		// forward until detecting 1cm black line if there is no previous rotation
 		//while (!((Left_white_line > 16) || (Center_white_line > 16) || (Right_white_line > 16))) { // center on black	
 		while (!((Left_white_line <= 16) && (Center_white_line > 16) && (Right_white_line <= 16))) { // center on black
@@ -769,7 +830,7 @@ void move_one_cell () {
 		buzzer_on();
 		_delay_ms(50);		//delay
 		buzzer_off();
-	}
+	}*/
 
 	// forward until detecting next 3x3 black box
 	//while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
@@ -826,14 +887,14 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 			current_coordinate[1] = current_coordinate[1] - 1;
-			debug(1);
+			//debug(1);
 			// move one cell and update robot's status
 		}
 		
-		//GLCD_SetCursor(1, 1, 1);
-		GLCD_DisplayDecimalNumber(current_coordinate[1], 2);
-		//GLCD_SetCursor(1, 1, 15);
-		GLCD_DisplayDecimalNumber(nearest_point[1], 2);
+		////GLCD_SetCursor(1, 1, 1);
+		//GLCD_DisplayDecimalNumber(current_coordinate[1], 2);
+		////GLCD_SetCursor(1, 1, 15);
+		//GLCD_DisplayDecimalNumber(nearest_point[1], 2);
 		lcd_print(2, 11, nearest_point[0], 2);
 		lcd_print(2, 14, nearest_point[1], 2);
 	
@@ -844,7 +905,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 			current_coordinate[1] = current_coordinate[1] + 1;
-			debug(2);
+			//debug(2);
 			//GLCD_SetCursor(1, 10, 1);
 			//GLCD_DisplayDecimalNumber(current_coordinate[1], 2);
 			//GLCD_SetCursor(1, 10, 15);
@@ -859,7 +920,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
 			current_coordinate[0] = current_coordinate[0] - 1;
-			debug(3);
+			//debug(3);
 			// move one cell and update robot's status
 		}
 	
@@ -870,7 +931,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
 			current_coordinate[0] = current_coordinate[0] + 1;
-			debug(4);
+			//debug(4);
 			// move one cell and update robot's status
 		}
 	} else { // go to cell no in D2	
@@ -883,7 +944,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 			current_coordinate[1] = current_coordinate[1] - 1;
-			debug(5);
+			//debug(5);
 			// move one cell and update robot's status
 		}
 	
@@ -894,7 +955,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 			current_coordinate[1] = current_coordinate[1] + 1;
-			debug(6);
+			//debug(6);
 			// move one cell and update robot's status
 		}
 		
@@ -905,7 +966,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no -= 6; // 8, 4, 0; 9, 5, 1; ...
 			current_coordinate[0] = current_coordinate[0] - 1;
-			debug(7);
+			//debug(7);
 			// move one cell and update robot's status
 		}
 	
@@ -916,7 +977,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no += 6; // 8, 4, 0; 9, 5, 1; ...
 			current_coordinate[0] = current_coordinate[0] + 1;
-			debug(8);
+			//debug(8);
 			// move one cell and update robot's status
 		}
 	}
@@ -960,7 +1021,7 @@ void get_pickup_direction () {
 	if (current_direction == 'N') { // if north, just compare columns
 		for (i=0; i<4; i++) {
 			//GLCD_Printf("@ %d~%d,", current_coordinate[1], d1_position_map[current_cell_no][i][1]);
-			GLCD_Printf("@%1d,%1d-%2d-%1d-%1d,", current_coordinate[0], current_coordinate[1], current_cell_no, i, 1);
+			//GLCD_Printf("@%1d,%1d-%2d-%1d-%1d,", current_coordinate[0], current_coordinate[1], current_cell_no, i, 1);
 			if (current_coordinate[1] > d1_position_map[current_cell_no][i][1]) left++;
 			else if (current_coordinate[1] < d1_position_map[current_cell_no][i][1]) right++;
 		}
@@ -981,7 +1042,7 @@ void get_pickup_direction () {
 		}		
 	}
 	
-	GLCD_Printf(" #L: %d, R: %d", left, right);
+	//GLCD_Printf(" #L: %d, R: %d", left, right);
 	
 	if (left > right) pickup_direction = 'L';
 	else pickup_direction = 'R';
@@ -997,44 +1058,44 @@ void deposit () {
 	
 	if ((current_coordinate[0] == d1_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][0][1])) {
-		debug(1);
+		//debug(1);
 		if (pickup_direction == 'L') change_direction('S');
 		else change_direction('E');
 	} else if ((current_coordinate[0] == d1_position_map[current_cell_no][1][0]) && // current_coordinate is on top right of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][1][1])) {
-		debug(2);
+		//debug(2);
 		if (pickup_direction == 'L') change_direction('W');
 		else change_direction('S');
 	} else if ((current_coordinate[0] == d1_position_map[current_cell_no][2][0]) && // current_coordinate is on bottom right of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][2][1])) {
-		debug(3);
+		//debug(3);
 		if (pickup_direction == 'L') change_direction('N');
 		else change_direction('W');
 	} else if ((current_coordinate[0] == d1_position_map[current_cell_no][3][0]) && // current_coordinate is on bottom left of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][3][1])) {
-		debug(4);
+		//debug(4);
 		if (pickup_direction == 'L') change_direction('E');
 		else change_direction('N');
 	}
 	
 	/*if ((current_coordinate[0] == d2_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
 	(current_coordinate[1] == d2_position_map[current_cell_no][0][1])) {
-		debug(1);
+		//debug(1);
 		if (pickup_direction == 'L') change_direction('S');
 		else change_direction('E');
 	} else if ((current_coordinate[0] == d2_position_map[current_cell_no][1][0]) && // current_coordinate is on top right of the cell
 	(current_coordinate[1] == d2_position_map[current_cell_no][1][1])) {
-		debug(2);
+		//debug(2);
 		if (pickup_direction == 'L') change_direction('W');
 		else change_direction('S');
 	} else if ((current_coordinate[0] == d2_position_map[current_cell_no][2][0]) && // current_coordinate is on bottom right of the cell
 	(current_coordinate[1] == d2_position_map[current_cell_no][2][1])) {
-		debug(3);
+		//debug(3);
 		if (pickup_direction == 'L') change_direction('N');
 		else change_direction('W');
 	} else if ((current_coordinate[0] == d2_position_map[current_cell_no][3][0]) && // current_coordinate is on bottom left of the cell
 	(current_coordinate[1] == d2_position_map[current_cell_no][3][1])) {
-		debug(4);
+		//debug(4);
 		if (pickup_direction == 'L') change_direction('E');
 		else change_direction('N');
 	}*/
@@ -1042,6 +1103,9 @@ void deposit () {
 	forward_mm(50);
 	
 	//turn off led
+	if (pickup_direction == 'L') left_led_off();
+	else right_led_off();
+	
 	GLCD_Clear();
 	GLCD_DisplayString("Deposit");
 	_delay_ms(1000);
@@ -1106,9 +1170,18 @@ int main() {
 	}
 	/*************************** converting input string to int array end ******************************/
 	
+	// synchronize wheels
+	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
+	left_velocity_float = current_velocity + current_velocity * 12/100.0; // 12 for the old robot
+	right_velocity_float = current_velocity;
+	left_velocity = (unsigned char) left_velocity_float;
+	right_velocity = (unsigned char) right_velocity_float;
+	
 	//GLCD_DisplayString("eYRCPlus-PS1#2678 rocks!!");
 	
 	// go to 9th cell from start
+	velocity(left_velocity, right_velocity);
+	forward_mm(50);
 	move_one_cell();
 	_delay_ms(500);
 	current_grid = 1;
@@ -1116,19 +1189,19 @@ int main() {
 	current_coordinate[0] = 3;
 	current_coordinate[1] = 2;
 
-	debug(0);
-	go_to_cell_no(1, 0);
+	/*//debug(0);
+	go_to_cell_no(1, 6);
 	//go_to_cell_no(1, 7);
 	pickup(8);
 	//go_to_cell_no(1, 10);
 	//pickup(8);
 	
-	go_to_cell_no(1, 6);
+	go_to_cell_no(1, 0);
 	deposit();
 	//move_one_cell();
-	//move_one_cell();
+	//move_one_cell();*/
+
 	
-	/*
 	// start traversal	
 	//	iterate through all positions
 	//	to get value, add 1 to i, e.g.: path_points[i+1]
@@ -1190,7 +1263,7 @@ int main() {
 			
 			j++;
 		}
-	}*/
+	}
 	
 	while(1) {
 		// continuous buzzer on finished the task
