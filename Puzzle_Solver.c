@@ -564,6 +564,8 @@ void init_devices (void)
 // ################################ my functions and variables start #######################################
 // #########################################################################################################
 
+
+// ################################ declaring global variables start #######################################
 // mapping cell no as array index with row-column of grids
 /*int d1_position_map[12][2] = {
 {1, 1},	{1, 2},	{1, 3},	{1, 4},
@@ -606,6 +608,48 @@ int current_coordinate[2] = {-1, -1};	// co-ordinate of the cell, initially inva
 
 float left_velocity_float, right_velocity_float;
 unsigned char left_velocity, right_velocity;
+// ################################ declaring global variables end #########################################
+
+
+// helper/debugger functions start #########################################################################
+void print_str_to_pc (char str[]) {
+	int i;
+	UDR2 = 0x0D;
+	for (i=0; i<strlen(str); i++) {
+		UDR2 = (unsigned char) str[i];
+		_delay_ms(10);
+	}
+}
+
+void print_int_to_pc (int num) {
+	int i;
+	unsigned char str[10];
+	snprintf(str, 10, "%d", num);
+	
+	UDR2 = 0x0D;
+	for (i=0; i<strlen(str); i++) {
+		UDR2 = (unsigned char) str[i];
+		_delay_ms(10);
+	}
+}
+
+void debug (int id, int pause) {
+	lcd_print(2, 1, current_coordinate[0], 2);
+	lcd_print(2, 4, current_coordinate[1], 2);
+	lcd_cursor(2, 7);
+	lcd_wr_char(current_direction);
+	lcd_print(1, 14, id, 2);
+	
+	if (pause == 1) {
+		// make the robot busy until detecting boot switch i.e. interrupt is pressed
+		while (1) {
+			if((PINE | 0x7F) == 0x7F) { // interrupt switch is pressed
+				break;
+			}
+		}
+	}
+}
+// helper/debugger functions end ###########################################################################
 
 // this function receives two points co-ordinates and returns path cost
 int get_path_cost (int current_point[2], int target_point[2]) {
@@ -856,18 +900,51 @@ void move_one_cell () {
 	forward_mm(50); // adjust 11 cm forward
 }
 
-void debug (int num) {
-	lcd_print(2, 1, current_coordinate[0], 2);
-	lcd_print(2, 4, current_coordinate[1], 2);
-	lcd_cursor(2, 7);
-	lcd_wr_char(current_direction);
-	lcd_print(1, 14, num, 2);
+// this function is used to move the robot to a particular coordinate
+//	constraint: when we are in D1, then we cannot put co-ordinate of D2 and vice-versa
+//				to do that, first cross the bridge
+void go_to_coordinate (int coordinate[]) {
+	while (current_coordinate[1] > coordinate[1]) {
+		change_direction('W');
+		_delay_ms(500);
+		move_one_cell();
+		_delay_ms(500);
+		//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+		current_coordinate[1] = current_coordinate[1] - 1;
+		debug(1, 0);
+		// move one cell and update robot's status			
+	}
+		
+	while (current_coordinate[1] < coordinate[1]) {// go east/west until both position on same column
+		change_direction('E');
+		_delay_ms(500);
+		move_one_cell();
+		_delay_ms(500);
+		//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+		current_coordinate[1] = current_coordinate[1] + 1;
+		debug(2, 0);
+	}
+		
+	while (current_coordinate[0] > coordinate[0]) {// go north/south until both position on same row
+		change_direction('N');
+		_delay_ms(500);
+		move_one_cell();
+		_delay_ms(500);
+		//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
+		current_coordinate[0] = current_coordinate[0] - 1;
+		debug(3, 0);
+		// move one cell and update robot's status
+	}
 	
-	// make the robot busy until detecting boot switch i.e. interrupt is pressed
-	while (1) {
-		if((PINE | 0x7F) == 0x7F) { // interrupt switch is pressed
-			break;
-		}
+	while (current_coordinate[0] < coordinate[0]) {// go north/south until both position on same row
+		change_direction('S');
+		_delay_ms(500);
+		move_one_cell();
+		_delay_ms(500);
+		//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
+		current_coordinate[0] = current_coordinate[0] + 1;
+		debug(4, 0);
+		// move one cell and update robot's status
 	}
 }
 
@@ -887,7 +964,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 			current_coordinate[1] = current_coordinate[1] - 1;
-			//debug(1);
+			debug(1, 0);
 			// move one cell and update robot's status
 		}
 		
@@ -905,7 +982,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 			current_coordinate[1] = current_coordinate[1] + 1;
-			//debug(2);
+			debug(2, 0);
 			//GLCD_SetCursor(1, 10, 1);
 			//GLCD_DisplayDecimalNumber(current_coordinate[1], 2);
 			//GLCD_SetCursor(1, 10, 15);
@@ -920,7 +997,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
 			current_coordinate[0] = current_coordinate[0] - 1;
-			//debug(3);
+			debug(3, 0);
 			// move one cell and update robot's status
 		}
 	
@@ -931,7 +1008,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
 			current_coordinate[0] = current_coordinate[0] + 1;
-			//debug(4);
+			debug(4, 0);
 			// move one cell and update robot's status
 		}
 	} else { // go to cell no in D2	
@@ -944,7 +1021,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 			current_coordinate[1] = current_coordinate[1] - 1;
-			//debug(5);
+			debug(5, 0);
 			// move one cell and update robot's status
 		}
 	
@@ -955,7 +1032,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 			current_coordinate[1] = current_coordinate[1] + 1;
-			//debug(6);
+			debug(6, 0);
 			// move one cell and update robot's status
 		}
 		
@@ -966,7 +1043,7 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no -= 6; // 8, 4, 0; 9, 5, 1; ...
 			current_coordinate[0] = current_coordinate[0] - 1;
-			//debug(7);
+			debug(7, 0);
 			// move one cell and update robot's status
 		}
 	
@@ -977,11 +1054,12 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 			_delay_ms(500);
 			//current_cell_no += 6; // 8, 4, 0; 9, 5, 1; ...
 			current_coordinate[0] = current_coordinate[0] + 1;
-			//debug(8);
+			debug(8, 0);
 			// move one cell and update robot's status
 		}
 	}
 	
+	// after reaching, update current_cell_no
 	current_cell_no = target_cell_no;
 
 	buzzer_on();
@@ -1058,22 +1136,22 @@ void deposit () {
 	
 	if ((current_coordinate[0] == d1_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][0][1])) {
-		//debug(1);
+		debug(1, 0);
 		if (pickup_direction == 'L') change_direction('S');
 		else change_direction('E');
 	} else if ((current_coordinate[0] == d1_position_map[current_cell_no][1][0]) && // current_coordinate is on top right of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][1][1])) {
-		//debug(2);
+		debug(2, 0);
 		if (pickup_direction == 'L') change_direction('W');
 		else change_direction('S');
 	} else if ((current_coordinate[0] == d1_position_map[current_cell_no][2][0]) && // current_coordinate is on bottom right of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][2][1])) {
-		//debug(3);
+		debug(3, 0);
 		if (pickup_direction == 'L') change_direction('N');
 		else change_direction('W');
 	} else if ((current_coordinate[0] == d1_position_map[current_cell_no][3][0]) && // current_coordinate is on bottom left of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][3][1])) {
-		//debug(4);
+		debug(4, 0);
 		if (pickup_direction == 'L') change_direction('E');
 		else change_direction('N');
 	}
@@ -1116,29 +1194,6 @@ void deposit () {
 
 // my functions and variables end ##########################################################################
 
-// helper/debugger functions start #########################################################################
-void print_str_to_pc (char str[]) {
-	int i;
-	UDR2 = 0x0D;
-	for (i=0; i<strlen(str); i++) {
-		UDR2 = (unsigned char) str[i];
-		_delay_ms(10);
-	}
-}
-
-void print_int_to_pc (int num) {
-	int i;	
-	unsigned char str[10];
-	snprintf(str, 10, "%d", num);
-	
-	UDR2 = 0x0D;
-	for (i=0; i<strlen(str); i++) {
-		UDR2 = (unsigned char) str[i];
-		_delay_ms(10);
-	}
-}
-// helper/debugger functions end ###########################################################################
-
 //Main Function
 int main() {
 	init_devices();
@@ -1177,10 +1232,20 @@ int main() {
 	left_velocity = (unsigned char) left_velocity_float;
 	right_velocity = (unsigned char) right_velocity_float;
 	
-	//GLCD_DisplayString("eYRCPlus-PS1#2678 rocks!!");
+
 	
 	// go to 9th cell from start
 	velocity(left_velocity, right_velocity);
+	
+	/*current_grid = 2;
+	current_direction = 'E';
+	current_coordinate[0] = 2;
+	current_coordinate[1] = 0;
+	go_to_cell_no(2, 2);
+	pickup_direction = 'R';
+	deposit();
+	GLCD_DisplayString("\nafter deposit");*/
+	
 	forward_mm(50);
 	move_one_cell();
 	_delay_ms(500);
@@ -1188,6 +1253,8 @@ int main() {
 	current_direction = 'N';
 	current_coordinate[0] = 3;
 	current_coordinate[1] = 2;
+	
+	
 
 	/*//debug(0);
 	go_to_cell_no(1, 6);
@@ -1214,49 +1281,64 @@ int main() {
 				// target cell is in D1 i.e. pickup operation
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
-					pickup(path_points[i+1]);				
+					pickup(path_points[i+1]);
+					debug(50, 1);			
 				} else { // robot is in D2, need to cross the bridge to go to D1
 					// 1. move to bridge point 6 in D2
-					go_to_cell_no(2, 6);
+					//go_to_cell_no(2, 6); this wont work anymore, meed to specify particular co-ordinates
+					go_to_coordinate((int[]){2, 0});
 					
 					// 2. go west two cells
 					change_direction('W');
+					debug(51, 1);
 					move_one_cell();
 					move_one_cell();
 					
 					// 3. update current_grid=1 and current_cell_no=7 (D1 bridge point)
 					current_grid = 1;
-					current_cell_no = 7;
+					current_coordinate[0] = 2; // update current_coordinate
+					current_coordinate[1] = 4;
+					//current_cell_no = 7;
 					
 					// 4. go_to_cell_no()
 					go_to_cell_no(1, path_points[i]);
 					
 					// 5. pickup
 					pickup(path_points[i+1]);
+					debug(52, 1);
 					// turn on left LED, show number path_points[i+1] on GLCD
-				}			
+				}
 				
 				print_int_to_pc(path_points[i]);
 			} else { // j is odd i.e. position is in D2
 				// target cell is in D2 i.e. deposit operation
 				
 				// 1. move to bridge point 7 in D1
-				go_to_cell_no(1, 7);
+				//go_to_cell_no(1, 7); this wont work anymore, meed to specify particular co-ordinates
+				go_to_coordinate((int[]){2, 4});
 				
 				// 2. go east two cells
 				change_direction('E');
+				debug(53, 1);
 				move_one_cell();
 				move_one_cell();
-				
+				debug(54, 1);
 				// 3. update current_grid=2 and current_cell_no=6 (D2 bridge point)
 				current_grid = 2;
-				current_cell_no = 6;
+				current_coordinate[0] = 2; // update current_coordinate
+				current_coordinate[1] = 0;
+				//current_cell_no = 6;
 				
 				// 4. go_to_cell_no()
+				GLCD_Printf("\nTarget cell: %d", path_points[i]);
+				GLCD_Printf("\nCurrent coord: %d, %d", current_coordinate[0], current_coordinate[1]);
+				debug(55, 1);
 				go_to_cell_no(2, path_points[i]);
+				debug(56, 1);
 				
 				// 5. deposit
 				deposit();
+				debug(57, 1);
 				// turn off left LED, show Deposited on GLCD
 				// 1000ms buzzer on completion of each solution
 			}
