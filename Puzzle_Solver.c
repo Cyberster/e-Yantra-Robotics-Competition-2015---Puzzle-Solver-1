@@ -949,115 +949,16 @@ void go_to_coordinate (int coordinate[]) {
 }
 
 void go_to_cell_no (int target_division, int target_cell_no) {
-	const int * nearest_point;
+	int * nearest_point;
 	nearest_point = (int *) malloc(2 * sizeof(int));
 	
 	if (target_division == 1) { // go to cell no in D1
 		memcpy(nearest_point, get_nearest_point(current_coordinate, d1_position_map[target_cell_no]), 2 * sizeof(int));
-		lcd_print(2, 11, nearest_point[0], 2);
-		lcd_print(2, 14, nearest_point[1], 2);
-		
-		while (current_coordinate[1] > nearest_point[1]) {// go east/west until both position on same column
-			change_direction('W');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
-			current_coordinate[1] = current_coordinate[1] - 1;
-			debug(1, 0);
-			// move one cell and update robot's status
-		}
-		
-		////GLCD_SetCursor(1, 1, 1);
-		//GLCD_DisplayDecimalNumber(current_coordinate[1], 2);
-		////GLCD_SetCursor(1, 1, 15);
-		//GLCD_DisplayDecimalNumber(nearest_point[1], 2);
-		lcd_print(2, 11, nearest_point[0], 2);
-		lcd_print(2, 14, nearest_point[1], 2);
-	
-		while (current_coordinate[1] < nearest_point[1]) {// go east/west until both position on same column
-			change_direction('E');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
-			current_coordinate[1] = current_coordinate[1] + 1;
-			debug(2, 0);
-			//GLCD_SetCursor(1, 10, 1);
-			//GLCD_DisplayDecimalNumber(current_coordinate[1], 2);
-			//GLCD_SetCursor(1, 10, 15);
-			//GLCD_DisplayDecimalNumber(nearest_point[1], 2);
-			// move one cell and update robot's status
-		}
-		
-		while (current_coordinate[0] > nearest_point[0]) {// go north/south until both position on same row
-			change_direction('N');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
-			current_coordinate[0] = current_coordinate[0] - 1;
-			debug(3, 0);
-			// move one cell and update robot's status
-		}
-	
-		while (current_coordinate[0] < nearest_point[0]) {// go north/south until both position on same row
-			change_direction('S');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
-			current_coordinate[0] = current_coordinate[0] + 1;
-			debug(4, 0);
-			// move one cell and update robot's status
-		}
 	} else { // go to cell no in D2	
 		memcpy(nearest_point, get_nearest_point(current_coordinate, d2_position_map[target_cell_no]), 2 * sizeof(int));
-		
-		while (current_coordinate[1] > nearest_point[1]) {// go east/west until both position on same column
-			change_direction('W');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
-			current_coordinate[1] = current_coordinate[1] - 1;
-			debug(5, 0);
-			// move one cell and update robot's status
-		}
-	
-		while (current_coordinate[1] < nearest_point[1]) {// go east/west until both position on same column
-			change_direction('E');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
-			current_coordinate[1] = current_coordinate[1] + 1;
-			debug(6, 0);
-			// move one cell and update robot's status
-		}
-		
-		while (current_coordinate[0] > nearest_point[0]) {// go north/south until both position on same row
-			change_direction('N');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			//current_cell_no -= 6; // 8, 4, 0; 9, 5, 1; ...
-			current_coordinate[0] = current_coordinate[0] - 1;
-			debug(7, 0);
-			// move one cell and update robot's status
-		}
-	
-		while (current_coordinate[0] < nearest_point[0]) {// go north/south until both position on same row
-			change_direction('S');
-			_delay_ms(500);
-			move_one_cell();
-			_delay_ms(500);
-			//current_cell_no += 6; // 8, 4, 0; 9, 5, 1; ...
-			current_coordinate[0] = current_coordinate[0] + 1;
-			debug(8, 0);
-			// move one cell and update robot's status
-		}
 	}
+	
+	go_to_coordinate(nearest_point);
 	
 	// after reaching, update current_cell_no
 	current_cell_no = target_cell_no;
@@ -1134,7 +1035,7 @@ void deposit () {
 	//GLCD_Printf("$%d~%d <> %d~%d$", current_coordinate[0], current_coordinate[1], d1_position_map[current_cell_no][1][0], d1_position_map[current_cell_no][1][1]);
 	//GLCD_Printf("\ncrnt_cell:%d", current_cell_no);
 	
-	if ((current_coordinate[0] == d1_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
+	/*if ((current_coordinate[0] == d1_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
 		(current_coordinate[1] == d1_position_map[current_cell_no][0][1])) {
 		debug(1, 0);
 		if (pickup_direction == 'L') change_direction('S');
@@ -1154,9 +1055,9 @@ void deposit () {
 		debug(4, 0);
 		if (pickup_direction == 'L') change_direction('E');
 		else change_direction('N');
-	}
+	}*/
 	
-	/*if ((current_coordinate[0] == d2_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
+	if ((current_coordinate[0] == d2_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
 	(current_coordinate[1] == d2_position_map[current_cell_no][0][1])) {
 		//debug(1);
 		if (pickup_direction == 'L') change_direction('S');
@@ -1176,7 +1077,7 @@ void deposit () {
 		//debug(4);
 		if (pickup_direction == 'L') change_direction('E');
 		else change_direction('N');
-	}*/
+	}
 	
 	forward_mm(50);
 	
@@ -1275,30 +1176,32 @@ int main() {
 	//	use j to count iteration number, even value of j = position is in D1, odd value of j = position is in D2
 	j = 0; // iteration counter
 	
+	int sum = 0;
 	for (i=0; i<100; i+=2) {
+		
 		if (path_points[i] != -1) {			
 			if (j%2 == 0) { // j is even i.e. position is in D1
 				// target cell is in D1 i.e. pickup operation
+				sum += path_points[i+1]; // add D1 number's value to sum
+				
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
 					pickup(path_points[i+1]);
 					debug(50, 1);			
 				} else { // robot is in D2, need to cross the bridge to go to D1
-					// 1. move to bridge point 6 in D2
-					//go_to_cell_no(2, 6); this wont work anymore, meed to specify particular co-ordinates
+					// 1. move to bridge point (2, 0) in D2
 					go_to_coordinate((int[]){2, 0});
 					
 					// 2. go west two cells
 					change_direction('W');
 					debug(51, 1);
 					move_one_cell();
-					move_one_cell();
 					
-					// 3. update current_grid=1 and current_cell_no=7 (D1 bridge point)
+					// 3. update current_grid=1 and current_coordinate=(2, 4) (D1 bridge point)
 					current_grid = 1;
-					current_coordinate[0] = 2; // update current_coordinate
+					// update current_coordinate
+					current_coordinate[0] = 2; 
 					current_coordinate[1] = 4;
-					//current_cell_no = 7;
 					
 					// 4. go_to_cell_no()
 					go_to_cell_no(1, path_points[i]);
@@ -1306,28 +1209,25 @@ int main() {
 					// 5. pickup
 					pickup(path_points[i+1]);
 					debug(52, 1);
-					// turn on left LED, show number path_points[i+1] on GLCD
 				}
 				
 				print_int_to_pc(path_points[i]);
 			} else { // j is odd i.e. position is in D2
 				// target cell is in D2 i.e. deposit operation
 				
-				// 1. move to bridge point 7 in D1
-				//go_to_cell_no(1, 7); this wont work anymore, meed to specify particular co-ordinates
+				// 1. move to bridge point (2, 4) in D1
 				go_to_coordinate((int[]){2, 4});
 				
 				// 2. go east two cells
 				change_direction('E');
 				debug(53, 1);
 				move_one_cell();
-				move_one_cell();
 				debug(54, 1);
-				// 3. update current_grid=2 and current_cell_no=6 (D2 bridge point)
+				// 3. update current_grid=2 and current_coordinate=(2, 0) (D2 bridge point)
 				current_grid = 2;
-				current_coordinate[0] = 2; // update current_coordinate
+				// update current_coordinate
+				current_coordinate[0] = 2;
 				current_coordinate[1] = 0;
-				//current_cell_no = 6;
 				
 				// 4. go_to_cell_no()
 				GLCD_Printf("\nTarget cell: %d", path_points[i]);
@@ -1338,9 +1238,14 @@ int main() {
 				
 				// 5. deposit
 				deposit();
+				// compare sum with the number in D2 andturn on buzzer for 1000ms on completion of number in D2
+				if (sum == path_points[i+1]) {
+					buzzer_on();
+					_delay_ms(1000);
+					buzzer_off();
+					sum = 0;
+				}
 				debug(57, 1);
-				// turn off left LED, show Deposited on GLCD
-				// 1000ms buzzer on completion of each solution
 			}
 			
 			j++;
