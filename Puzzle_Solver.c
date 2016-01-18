@@ -1,43 +1,11 @@
 /************************************************************************************
- LCD Connections:
- 			  LCD	  Microcontroller Pins
- 			  RS  --> PC0
-			  RW  --> PC1
-			  EN  --> PC2
-			  DB7 --> PC7
-			  DB6 --> PC6
-			  DB5 --> PC5
-			  DB4 --> PC4
-
- ADC Connection:
- 			  ACD CH.	PORT	Sensor
-			  0			PF0		Battery Voltage
-			  1			PF1		White line sensor 3
-			  2			PF2		White line sensor 2
-			  3			PF3		White line sensor 1
-			  4			PF4		IR Proximity analog sensor 1*****
-			  5			PF5		IR Proximity analog sensor 2*****
-			  6			PF6		IR Proximity analog sensor 3*****
-			  7			PF7		IR Proximity analog sensor 4*****
-			  8			PK0		IR Proximity analog sensor 5
-			  9			PK1		Sharp IR range sensor 1
-			  10		PK2		Sharp IR range sensor 2
-			  11		PK3		Sharp IR range sensor 3
-			  12		PK4		Sharp IR range sensor 4
-			  13		PK5		Sharp IR range sensor 5
-			  14		PK6		Servo Pod 1
-			  15		PK7		Servo Pod 2
-
- ***** For using Analog IR proximity (1, 2, 3 and 4) sensors short the jumper J2. 
- 	   To use JTAG via expansion slot of the microcontroller socket remove these jumpers.  
- 
- Motion control Connection:
- 			L-1---->PA0;		L-2---->PA1;
-   			R-1---->PA2;		R-2---->PA3;
-   			PL3 (OC5A) ----> PWM left; 	PL4 (OC5B) ----> PWM right; 
- 
- ****************************************************************************
-*********************************************************************************/
+ *	Team ID: eYRCPlus-PS1#2678
+ *	Team Members:
+ *		- Avick Dutta (team leader)
+ *		- Arpan Das
+ *		- Subhendu Hazra
+ *		- Asesh Basu
+*************************************************************************************/
 
 #define F_CPU 14745600
 #include <avr/io.h>
@@ -719,14 +687,16 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 		flag=1;
 		if (direction == 'F') forward();
 		else back();
-		velocity(left_velocity+30, right_velocity-50);
+		//velocity(left_velocity+30, right_velocity-50);
+		velocity(left_velocity+50, right_velocity-50);
 	}
 
 	if((Left_white_line > 16) && (Center_white_line <= 16) && (Right_white_line <= 16) && (flag == 0)) {
 		flag=1;
 		if (direction == 'F') forward();
 		else back();
-		velocity(left_velocity-50, right_velocity+30);
+		//velocity(left_velocity-50, right_velocity+30);
+		velocity(left_velocity-50, right_velocity+50);
 	}
 }
 
@@ -761,14 +731,14 @@ void follow_black_line_mm (unsigned char Left_white_line, unsigned char Center_w
  */
 void turn_left () {
 	left_degrees(30); // rotate 30 degree to skip current line
-	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	//Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	//Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 
-	//while (Center_white_line < 16) {
-	while (Left_white_line <= 16) {
-		//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		Left_white_line = ADC_Conversion(2);	//Getting data of Left WL Sensor
+	while (Center_white_line <= 16) {
+	//while (Left_white_line <= 16) {
+		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		//Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		left_degrees(5);
 	}
 	_delay_ms(500);
@@ -780,13 +750,13 @@ void turn_left () {
 void turn_right () {
 	right_degrees(30); // rotate 30 degree to skip current line
 	//Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	//Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
-	//while (Center_white_line < 16) {
-	while (Right_white_line <= 16) {
-		//Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		Right_white_line = ADC_Conversion(2);	//Getting data of Right WL Sensor
+	while (Center_white_line <= 16) {
+	//while (Right_white_line <= 16) {
+		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		//Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 		right_degrees(5);
 	}
 	_delay_ms(500);
@@ -966,8 +936,8 @@ void move_one_cell () {
 	//_delay_ms(500);
 	
 	// adjust 11 cm forward
-	//forward_mm(50); 
-	follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F'); // old robot 110
+	forward_mm(60);
+	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F'); // old robot 110
 }
 
 /** It is used to move the robot to a particular coordinate
@@ -1055,7 +1025,7 @@ void pickup (int num) {
 	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-	forward_mm(40);
+	forward_mm(30);
 	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'F');
 	
 	get_pickup_direction();
@@ -1068,8 +1038,8 @@ void pickup (int num) {
 	GLCD_Clear();
 	GLCD_Printf("%d", num);
 	
-	_delay_ms(1000);
-	back_mm(40);
+	_delay_ms(500);
+	back_mm(30);
 	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'B');
 }
 
@@ -1170,7 +1140,7 @@ void deposit (int completed) {
 		else change_direction('N');
 	}
 	
-	forward_mm(40);
+	forward_mm(30);
 	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'F');	
 	
 	//turn off led
@@ -1188,7 +1158,7 @@ void deposit (int completed) {
 	}
 	GLCD_Clear();
 	
-	back_mm(50);
+	back_mm(30);
 	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'B');
 }
 
@@ -1225,6 +1195,9 @@ int main() {
 	}
 	/*************************** converting input string to int array end ******************************/
 	
+	// set velocity
+	current_velocity = 127;
+	
 	// synchronize wheels
 	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
 	left_velocity_float = current_velocity + current_velocity * 0/100.0; // 12 for the old robot
@@ -1232,44 +1205,24 @@ int main() {
 	left_velocity = (unsigned char) left_velocity_float;
 	right_velocity = (unsigned char) right_velocity_float;
 	
-
-	
 	// go to 9th cell from start
 	velocity(left_velocity, right_velocity);
-	
-	/*current_grid = 2;
-	current_direction = 'E';
-	current_coordinate[0] = 2;
-	current_coordinate[1] = 0;
-	go_to_cell_no(2, 2);
-	pickup_direction = 'R';
-	deposit();
-	GLCD_DisplayString("\nafter deposit");*/
 	
 	//forward_mm(50);
 	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-	follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F');
+	
+	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 200, 'F');
+	
+	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F');
+	forward_mm(50);
 	move_one_cell();
 	_delay_ms(500);
 	current_grid = 1;
 	current_direction = 'N';
 	current_coordinate[0] = 3;
 	current_coordinate[1] = 2;
-	
-
-	/*//debug(0);
-	go_to_cell_no(1, 6);
-	//go_to_cell_no(1, 7);
-	pickup(8);
-	//go_to_cell_no(1, 10);
-	//pickup(8);
-	
-	go_to_cell_no(1, 0);
-	deposit();
-	//move_one_cell();
-	//move_one_cell();*/
 
 	
 	// start traversal	
@@ -1287,15 +1240,13 @@ int main() {
 				
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
-					pickup(path_points[i+1]);
-					debug(50, 0);			
+					pickup(path_points[i+1]);			
 				} else { // robot is in D2, need to cross the bridge to go to D1
 					// 1. move to bridge point (2, 0) in D2
 					go_to_coordinate((int[]){2, 0});
 					
 					// 2. go west two cells
 					change_direction('W');
-					debug(51, 0);
 					move_one_cell();
 					
 					// 3. update current_grid=1 and current_coordinate=(2, 4) (D1 bridge point)
@@ -1309,10 +1260,7 @@ int main() {
 					
 					// 5. pickup
 					pickup(path_points[i+1]);
-					debug(52, 0);
 				}
-				
-				print_int_to_pc(path_points[i]);
 			} else { // j is odd i.e. position is in D2
 				// target cell is in D2 i.e. deposit operation
 				
@@ -1321,9 +1269,8 @@ int main() {
 				
 				// 2. go east two cells
 				change_direction('E');
-				debug(53, 0);
 				move_one_cell();
-				debug(54, 0);
+				
 				// 3. update current_grid=2 and current_coordinate=(2, 0) (D2 bridge point)
 				current_grid = 2;
 				// update current_coordinate
@@ -1331,11 +1278,7 @@ int main() {
 				current_coordinate[1] = 0;
 				
 				// 4. go_to_cell_no()
-				GLCD_Printf("\nTarget cell: %d", path_points[i]);
-				GLCD_Printf("\nCurrent coord: %d, %d", current_coordinate[0], current_coordinate[1]);
-				debug(55, 0);
 				go_to_cell_no(2, path_points[i]);
-				debug(56, 0);
 				
 				// 5. deposit
 				if (sum == path_points[i+1]) {
@@ -1344,7 +1287,7 @@ int main() {
 				} else {
 					deposit(0); // 0 = number in D2 is not complted
 				}
-				debug(57, 0);
+				GLCD_Printf("Gonna pick %d from cell#%d", path_points[i+3], path_points[i+2]);
 			}
 			
 			j++;
@@ -1354,9 +1297,7 @@ int main() {
 	// continuous buzzer on finished the task
 	buzzer_on();
 	
-	while(1) {
-
-		
+	while(1) {		
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
@@ -1365,16 +1306,6 @@ int main() {
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
 		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
 		
-		lcd_cursor(2, 1);
-		lcd_string("Task Completed! :D");
 		
-		left_led_on();
-		_delay_ms(500);
-		left_led_off();
-		_delay_ms(500);
-		right_led_on();
-		_delay_ms(500);
-		right_led_off();
-		_delay_ms(500);
 	}
 }
