@@ -598,7 +598,7 @@ int d2_position_map[24][4][2] = {
 	{{3, 0}, {3, 1}, {4, 1}, {4, 0}}, {{3, 1}, {3, 2}, {4, 2}, {4, 1}}, {{3, 2}, {3, 3}, {4, 3}, {4, 2}}, {{3, 3}, {3, 4}, {4, 4}, {4, 3}}, {{3, 4}, {3, 5}, {4, 5}, {4, 4}}, {{3, 5}, {3, 6}, {4, 6}, {4, 5}}
 };
 
-unsigned char current_velocity = 127;	// default velocity 100
+unsigned char current_velocity = 150;	// default velocity 100
 char current_direction = 'N';	// E/W/N/S
 char pickup_direction = '\0';	// values can be L or R i.e. left or right respectively
 int current_grid = -1;					// 1, 2 i.e. D1, D2, initially invalid
@@ -612,6 +612,10 @@ unsigned char left_velocity, right_velocity;
 
 
 // helper/debugger functions start #########################################################################
+/** Prints a given string to terminal software in PC
+ *
+ * @param str is a char array.
+ */
 void print_str_to_pc (char str[]) {
 	int i;
 	UDR2 = 0x0D;
@@ -621,6 +625,10 @@ void print_str_to_pc (char str[]) {
 	}
 }
 
+/** Prints a given integer to terminal software in PC
+ *
+ * @param num is an int.
+ */
 void print_int_to_pc (int num) {
 	int i;
 	unsigned char str[10];
@@ -633,6 +641,11 @@ void print_int_to_pc (int num) {
 	}
 }
 
+/** It prints current co-ordinate and direction to LCD, and it can also pause execution
+ *
+ * @param id is an int.
+ * @param pause is an int.
+ */
 void debug (int id, int pause) {
 	lcd_print(2, 1, current_coordinate[0], 2);
 	lcd_print(2, 4, current_coordinate[1], 2);
@@ -651,15 +664,25 @@ void debug (int id, int pause) {
 }
 // helper/debugger functions end ###########################################################################
 
-// this function receives two points co-ordinates and returns path cost
+/** It calculates the cost of traveling between two points
+ *
+ * @param current_point is an int array.
+ * @param target_point is an int array.
+ * @returns total_cost which is an int.
+ */
 int get_path_cost (int current_point[2], int target_point[2]) {
 	int total_cost;	
 	total_cost = abs(current_point[0] - target_point[0]) + abs(current_point[1] - target_point[1]);
 	return total_cost;
 }
 
-// this function receives current point and target cell which contains 4 points
-//	and returns nearest point from current point among those 4 points
+/** It receives current point and target cell which contains 4 points
+ *	and returns nearest point from current point among those 4 points
+ *
+ * @param current_point is an int *.
+ * @param target_cell is an int **.
+ * @returns nearest_point which is an int *.
+ */
 int * get_nearest_point (int current_point[2], int target_cell[4][2]) {
 	int nearest_point[2];
 	int i, current_cost, lowest_cost = 100;
@@ -676,35 +699,66 @@ int * get_nearest_point (int current_point[2], int target_cell[4][2]) {
 	return nearest_point;
 }
 
-void follow_black_line (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line) {
-	flag=0;
-	
-	/*// left wheel is physically 7.18% slower than the right wheel, so increase velocity
-	float left_velocity_float = current_velocity + current_velocity * 12/100.0; // 12 for the old robot
-	float right_velocity_float = current_velocity;
-	unsigned char left_velocity = (unsigned char) left_velocity_float;
-	unsigned char right_velocity = (unsigned char) right_velocity_float;*/
-	
+/** It follows a 1cm thick black line on white surface
+ *
+ * @param Left_white_line is an unsigned char.
+ * @param Center_white_line is an unsigned char.
+ * @param Right_white_line is an unsigned char.
+ */
+void follow_black_line (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line, char direction) {
+	flag=0;	
 		
 	if (((Left_white_line <= 16) && (Center_white_line <= 16) && (Right_white_line <= 16)) || (Center_white_line > 16)) {
 		flag=1;
-		forward();
+		if (direction == 'F') forward();
+		else back();
 		velocity(left_velocity, right_velocity);
 	}
 
 	if((Left_white_line <= 16) && (Center_white_line <= 16) && (Right_white_line > 16) && (flag == 0)) {
 		flag=1;
-		forward();
+		if (direction == 'F') forward();
+		else back();
 		velocity(left_velocity+30, right_velocity-50);
 	}
 
 	if((Left_white_line > 16) && (Center_white_line <= 16) && (Right_white_line <= 16) && (flag == 0)) {
 		flag=1;
-		forward();
+		if (direction == 'F') forward();
+		else back();
 		velocity(left_velocity-50, right_velocity+30);
 	}
 }
 
+/** It follows a black line up to a fixed distance
+ *
+ * @param Left_white_line is an unsigned char.
+ * @param Center_white_line is an unsigned char.
+ * @param Right_white_line is an unsigned char.
+ * @param DistanceInMM is an unsigned int.
+ */
+void follow_black_line_mm (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line, unsigned int DistanceInMM, char direction) {
+	float ReqdShaftCount = 0;
+	unsigned long int ReqdShaftCountInt = 0;
+
+	ReqdShaftCount = DistanceInMM / 5.338; // division by resolution to get shaft count
+	ReqdShaftCountInt = (unsigned long int) ReqdShaftCount;
+	
+	ShaftCountRight = 0;
+	while(1) {
+		if(ShaftCountRight > ReqdShaftCountInt) {
+			break;
+		} else {
+			follow_black_line(Left_white_line, Center_white_line, Right_white_line, direction);
+		}
+	}
+	
+	stop(); //Stop robot	
+}
+
+/** It turns the robot left until encounters a black line.
+ *
+ */
 void turn_left () {
 	left_degrees(30); // rotate 30 degree to skip current line
 	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
@@ -717,8 +771,12 @@ void turn_left () {
 		Left_white_line = ADC_Conversion(2);	//Getting data of Left WL Sensor
 		left_degrees(5);
 	}
+	_delay_ms(500);
 }
 
+/** It turns the robot right until encounter a black line.
+ *
+ */
 void turn_right () {
 	right_degrees(30); // rotate 30 degree to skip current line
 	//Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
@@ -731,8 +789,13 @@ void turn_right () {
 		Right_white_line = ADC_Conversion(2);	//Getting data of Right WL Sensor
 		right_degrees(5);
 	}
+	_delay_ms(500);
 }
 
+/** It changes the direction of the robot i.e. east/west/north/south.
+ *
+ * @param desired_direction is an unsigned char.
+ */
 void change_direction (unsigned char desired_direction) {
 	if (current_direction == desired_direction) return;
 	
@@ -849,6 +912,9 @@ void change_direction (unsigned char desired_direction) {
 	}
 }
 
+/** It follows a black line until encounter a 3x3 cm black square.
+ *
+ */
 void move_one_cell () {
 	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
@@ -888,27 +954,33 @@ void move_one_cell () {
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
 		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
 		
-		follow_black_line(Left_white_line, Center_white_line, Right_white_line);
+		follow_black_line(Left_white_line, Center_white_line, Right_white_line, 'F');
 	}
 		
-	buzzer_on();
+	//buzzer_on();
+	// this delay is important: if disabled, the bot may get our of line
 	_delay_ms(200);		//delay
-	buzzer_off();
+	//buzzer_off();
 	
 	//stop();
 	//_delay_ms(500);
-	forward_mm(50); // adjust 11 cm forward
+	
+	// adjust 11 cm forward
+	//forward_mm(50); 
+	follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F'); // old robot 110
 }
 
-// this function is used to move the robot to a particular coordinate
-//	constraint: when we are in D1, then we cannot put co-ordinate of D2 and vice-versa
-//				to do that, first cross the bridge
+/** It is used to move the robot to a particular coordinate
+ *	constraint: when we are in D1, then we cannot put co-ordinate of D2 and vice-versa
+ *	to do that, first cross the bridge
+ *
+ * @param coordinate is an int *.
+ */			
 void go_to_coordinate (int coordinate[]) {
 	while (current_coordinate[1] > coordinate[1]) {
 		change_direction('W');
-		_delay_ms(500);
 		move_one_cell();
-		_delay_ms(500);
+		//_delay_ms(500);
 		//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 		current_coordinate[1] = current_coordinate[1] - 1;
 		debug(1, 0);
@@ -917,9 +989,8 @@ void go_to_coordinate (int coordinate[]) {
 		
 	while (current_coordinate[1] < coordinate[1]) {// go east/west until both position on same column
 		change_direction('E');
-		_delay_ms(500);
 		move_one_cell();
-		_delay_ms(500);
+		//_delay_ms(500);
 		//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 		current_coordinate[1] = current_coordinate[1] + 1;
 		debug(2, 0);
@@ -927,9 +998,8 @@ void go_to_coordinate (int coordinate[]) {
 		
 	while (current_coordinate[0] > coordinate[0]) {// go north/south until both position on same row
 		change_direction('N');
-		_delay_ms(500);
 		move_one_cell();
-		_delay_ms(500);
+		//_delay_ms(500);
 		//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
 		current_coordinate[0] = current_coordinate[0] - 1;
 		debug(3, 0);
@@ -938,9 +1008,8 @@ void go_to_coordinate (int coordinate[]) {
 	
 	while (current_coordinate[0] < coordinate[0]) {// go north/south until both position on same row
 		change_direction('S');
-		_delay_ms(500);
 		move_one_cell();
-		_delay_ms(500);
+		//_delay_ms(500);
 		//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
 		current_coordinate[0] = current_coordinate[0] + 1;
 		debug(4, 0);
@@ -948,6 +1017,12 @@ void go_to_coordinate (int coordinate[]) {
 	}
 }
 
+
+/** It is used to go to nearest co-ordinate point of a cell from current point's co-ordinate
+ *
+ * @param target_division is an int.
+ * @param target_cell_no is an int.
+ */	
 void go_to_cell_no (int target_division, int target_cell_no) {
 	int * nearest_point;
 	nearest_point = (int *) malloc(2 * sizeof(int));
@@ -963,19 +1038,25 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 	// after reaching, update current_cell_no
 	current_cell_no = target_cell_no;
 
-	buzzer_on();
+	/*buzzer_on();
 	_delay_ms(100);
 	buzzer_off();
 	_delay_ms(100);
 	buzzer_on();
 	_delay_ms(100);
-	buzzer_off();
+	buzzer_off();*/
 }
 
+/** It is used to pickup a number from D1
+ *
+ * @param num is an int.
+ */	
 void pickup (int num) {
-	//change_direction('N');
-	//_delay_ms(500);
-	forward_mm(50);
+	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+	forward_mm(40);
+	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'F');
 	
 	get_pickup_direction();
 	//GLCD_Printf("#direction: %c", pickup_direction);
@@ -988,10 +1069,13 @@ void pickup (int num) {
 	GLCD_Printf("%d", num);
 	
 	_delay_ms(1000);
-	back_mm(50);
+	back_mm(40);
+	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'B');
 }
 
-// return L or R i.e. left or right respectively
+/** It is used to get the pickup direction i.e. L or R i.e. left or right respectively
+ *
+ */
 void get_pickup_direction () {
 	// current_direction, current_cell_no, current_coordinate, current_grid
 	//char direction;
@@ -1029,7 +1113,14 @@ void get_pickup_direction () {
 	//return direction;
 }
 
-void deposit () {
+/** It is used to deposit a number in D2
+ *
+ */
+void deposit (int completed) {
+	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+	
 	// current_direction, current_cell_no, current_coordinate, current_grid, pickup_direction
 	//GLCD_Clear();
 	//GLCD_Printf("$%d~%d <> %d~%d$", current_coordinate[0], current_coordinate[1], d1_position_map[current_cell_no][1][0], d1_position_map[current_cell_no][1][1]);
@@ -1079,7 +1170,8 @@ void deposit () {
 		else change_direction('N');
 	}
 	
-	forward_mm(50);
+	forward_mm(40);
+	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'F');	
 	
 	//turn off led
 	if (pickup_direction == 'L') left_led_off();
@@ -1087,10 +1179,17 @@ void deposit () {
 	
 	GLCD_Clear();
 	GLCD_DisplayString("Deposit");
-	_delay_ms(1000);
+	if (completed == 1) {
+		buzzer_on();
+		_delay_ms(1000);
+		buzzer_off();
+	} else {
+		_delay_ms(1000);
+	}
 	GLCD_Clear();
 	
 	back_mm(50);
+	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'B');
 }
 
 // my functions and variables end ##########################################################################
@@ -1128,7 +1227,7 @@ int main() {
 	
 	// synchronize wheels
 	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
-	left_velocity_float = current_velocity + current_velocity * 12/100.0; // 12 for the old robot
+	left_velocity_float = current_velocity + current_velocity * 0/100.0; // 12 for the old robot
 	right_velocity_float = current_velocity;
 	left_velocity = (unsigned char) left_velocity_float;
 	right_velocity = (unsigned char) right_velocity_float;
@@ -1147,14 +1246,17 @@ int main() {
 	deposit();
 	GLCD_DisplayString("\nafter deposit");*/
 	
-	forward_mm(50);
+	//forward_mm(50);
+	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+	follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F');
 	move_one_cell();
 	_delay_ms(500);
 	current_grid = 1;
 	current_direction = 'N';
 	current_coordinate[0] = 3;
 	current_coordinate[1] = 2;
-	
 	
 
 	/*//debug(0);
@@ -1175,10 +1277,9 @@ int main() {
 	//	to get value, add 1 to i, e.g.: path_points[i+1]
 	//	use j to count iteration number, even value of j = position is in D1, odd value of j = position is in D2
 	j = 0; // iteration counter
+	int sum = 0; // used to track when a number in D2 get completed
 	
-	int sum = 0;
 	for (i=0; i<100; i+=2) {
-		
 		if (path_points[i] != -1) {			
 			if (j%2 == 0) { // j is even i.e. position is in D1
 				// target cell is in D1 i.e. pickup operation
@@ -1187,14 +1288,14 @@ int main() {
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
 					pickup(path_points[i+1]);
-					debug(50, 1);			
+					debug(50, 0);			
 				} else { // robot is in D2, need to cross the bridge to go to D1
 					// 1. move to bridge point (2, 0) in D2
 					go_to_coordinate((int[]){2, 0});
 					
 					// 2. go west two cells
 					change_direction('W');
-					debug(51, 1);
+					debug(51, 0);
 					move_one_cell();
 					
 					// 3. update current_grid=1 and current_coordinate=(2, 4) (D1 bridge point)
@@ -1208,7 +1309,7 @@ int main() {
 					
 					// 5. pickup
 					pickup(path_points[i+1]);
-					debug(52, 1);
+					debug(52, 0);
 				}
 				
 				print_int_to_pc(path_points[i]);
@@ -1220,9 +1321,9 @@ int main() {
 				
 				// 2. go east two cells
 				change_direction('E');
-				debug(53, 1);
+				debug(53, 0);
 				move_one_cell();
-				debug(54, 1);
+				debug(54, 0);
 				// 3. update current_grid=2 and current_coordinate=(2, 0) (D2 bridge point)
 				current_grid = 2;
 				// update current_coordinate
@@ -1232,29 +1333,29 @@ int main() {
 				// 4. go_to_cell_no()
 				GLCD_Printf("\nTarget cell: %d", path_points[i]);
 				GLCD_Printf("\nCurrent coord: %d, %d", current_coordinate[0], current_coordinate[1]);
-				debug(55, 1);
+				debug(55, 0);
 				go_to_cell_no(2, path_points[i]);
-				debug(56, 1);
+				debug(56, 0);
 				
 				// 5. deposit
-				deposit();
-				// compare sum with the number in D2 andturn on buzzer for 1000ms on completion of number in D2
 				if (sum == path_points[i+1]) {
-					buzzer_on();
-					_delay_ms(1000);
-					buzzer_off();
+					deposit(1); // 1 = number in D2 is completed
 					sum = 0;
+				} else {
+					deposit(0); // 0 = number in D2 is not complted
 				}
-				debug(57, 1);
+				debug(57, 0);
 			}
 			
 			j++;
 		}
 	}
 	
+	// continuous buzzer on finished the task
+	buzzer_on();
+	
 	while(1) {
-		// continuous buzzer on finished the task
-		//buzzer_on();
+
 		
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
