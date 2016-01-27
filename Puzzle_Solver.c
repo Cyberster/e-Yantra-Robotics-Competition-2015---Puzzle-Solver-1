@@ -567,11 +567,12 @@ int d2_position_map[24][4][2] = {
 };
 
 unsigned char current_velocity = 150;	// default velocity 100
-char current_direction = 'N';	// E/W/N/S
-char pickup_direction = '\0';	// values can be L or R i.e. left or right respectively
+char current_direction = 'N';			// E/W/N/S
+char pickup_direction = '\0';			// values can be L or R i.e. left or right respectively
 int current_grid = -1;					// 1, 2 i.e. D1, D2, initially invalid
 int current_cell_no = -1;				// initially a invalid one
 int current_coordinate[2] = {-1, -1};	// co-ordinate of the cell, initially invalid
+int BNW_Thresh = 40;					// black and white thresh default 16
 
 float left_velocity_float, right_velocity_float;
 unsigned char left_velocity, right_velocity;
@@ -675,38 +676,42 @@ int * get_nearest_point (int current_point[2], int target_cell[4][2]) {
 void follow_black_line (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line, char direction) {
 	flag=0;	
 		
-	if (((Left_white_line <= 16) && (Center_white_line <= 16) && (Right_white_line <= 16)) || (Center_white_line > 16)) {
+	if (((Left_white_line <= BNW_Thresh) && (Center_white_line <= BNW_Thresh) && (Right_white_line <= BNW_Thresh)) || (Center_white_line > BNW_Thresh)) {
 		flag=1;
 		if (direction == 'F') forward();
 		else back();
 		velocity(left_velocity, right_velocity);
 	}
 
-	if((Left_white_line <= 16) && (Center_white_line <= 16) && (Right_white_line > 16) && (flag == 0)) {
+	if((Left_white_line <= BNW_Thresh) && (Center_white_line <= BNW_Thresh) && (Right_white_line > BNW_Thresh) && (flag == 0)) {
 		flag=1;
 		if (direction == 'F') forward();
 		else back();
-		//velocity(left_velocity+30, right_velocity-50);
-		velocity(left_velocity+50, right_velocity-50);
+		velocity(left_velocity+30, right_velocity-50);
+		//velocity(left_velocity+50, right_velocity-50);
+		//velocity(left_velocity, right_velocity*0.8);
+		//if (direction == 'F') velocity(left_velocity+50, right_velocity-50);
+		//else velocity(left_velocity-50, right_velocity+50);
 	}
 
-	if((Left_white_line > 16) && (Center_white_line <= 16) && (Right_white_line <= 16) && (flag == 0)) {
+	if((Left_white_line > BNW_Thresh) && (Center_white_line <= BNW_Thresh) && (Right_white_line <= BNW_Thresh) && (flag == 0)) {
 		flag=1;
 		if (direction == 'F') forward();
 		else back();
-		//velocity(left_velocity-50, right_velocity+30);
-		velocity(left_velocity-50, right_velocity+50);
+		velocity(left_velocity-50, right_velocity+30);
+		//velocity(left_velocity-50, right_velocity+50);
+		//velocity(left_velocity*0.8, right_velocity);
+		//if (direction == 'F') velocity(left_velocity-50, right_velocity+50);
+		//else velocity(left_velocity+50, right_velocity-50);
 	}
 }
 
 /** It follows a black line up to a fixed distance
  *
- * @param Left_white_line is an unsigned char.
- * @param Center_white_line is an unsigned char.
- * @param Right_white_line is an unsigned char.
  * @param DistanceInMM is an unsigned int.
+ * @param direction is a char.
  */
-void follow_black_line_mm (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line, unsigned int DistanceInMM, char direction) {
+void follow_black_line_mm (unsigned int DistanceInMM, char direction) {
 	float ReqdShaftCount = 0;
 	unsigned long int ReqdShaftCountInt = 0;
 
@@ -714,8 +719,13 @@ void follow_black_line_mm (unsigned char Left_white_line, unsigned char Center_w
 	ReqdShaftCountInt = (unsigned long int) ReqdShaftCount;
 	
 	ShaftCountRight = 0;
+	ShaftCountLeft = 0;
 	while(1) {
-		if(ShaftCountRight > ReqdShaftCountInt) {
+		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+		
+		if(ShaftCountRight > ReqdShaftCountInt || ShaftCountLeft > ReqdShaftCountInt) {
 			break;
 		} else {
 			follow_black_line(Left_white_line, Center_white_line, Right_white_line, direction);
@@ -1109,44 +1119,85 @@ void move_one_cell () {
  *
  * @param coordinate is an int *.
  */			
-void go_to_coordinate (int target_coordinate[]) {	
-	while (current_coordinate[1] > target_coordinate[1]) {
-		change_direction('W');
-		move_one_cell();
-		//_delay_ms(500);
-		//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
-		current_coordinate[1] = current_coordinate[1] - 1;
-		debug(1, 0);
-		// move one cell and update robot's status			
-	}
+void go_to_coordinate (int target_coordinate[]) {
+	if (current_direction == 'E' || current_direction == 'W') { // match column then row
+		while (current_coordinate[1] > target_coordinate[1]) {
+			change_direction('W');
+			move_one_cell();
+			//_delay_ms(500);
+			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+			current_coordinate[1] = current_coordinate[1] - 1;
+			debug(1, 0);
+			// move one cell and update robot's status			
+		}
 		
-	while (current_coordinate[1] < target_coordinate[1]) {// go east/west until both position on same column
-		change_direction('E');
-		move_one_cell();
-		//_delay_ms(500);
-		//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
-		current_coordinate[1] = current_coordinate[1] + 1;
-		debug(2, 0);
-	}
+		while (current_coordinate[1] < target_coordinate[1]) {// go east/west until both position on same column
+			change_direction('E');
+			move_one_cell();
+			//_delay_ms(500);
+			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+			current_coordinate[1] = current_coordinate[1] + 1;
+			debug(2, 0);
+		}
 		
-	while (current_coordinate[0] > target_coordinate[0]) {// go north/south until both position on same row
-		change_direction('N');
-		move_one_cell();
-		//_delay_ms(500);
-		//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
-		current_coordinate[0] = current_coordinate[0] - 1;
-		debug(3, 0);
-		// move one cell and update robot's status
-	}
+		while (current_coordinate[0] > target_coordinate[0]) {// go north/south until both position on same row
+			change_direction('N');
+			move_one_cell();
+			//_delay_ms(500);
+			//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
+			current_coordinate[0] = current_coordinate[0] - 1;
+			debug(3, 0);
+			// move one cell and update robot's status
+		}
 	
-	while (current_coordinate[0] < target_coordinate[0]) {// go north/south until both position on same row
-		change_direction('S');
-		move_one_cell();
-		//_delay_ms(500);
-		//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
-		current_coordinate[0] = current_coordinate[0] + 1;
-		debug(4, 0);
-		// move one cell and update robot's status
+		while (current_coordinate[0] < target_coordinate[0]) {// go north/south until both position on same row
+			change_direction('S');
+			move_one_cell();
+			//_delay_ms(500);
+			//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
+			current_coordinate[0] = current_coordinate[0] + 1;
+			debug(4, 0);
+			// move one cell and update robot's status
+		}		
+	} else { // current_direction = N/S  // match row then column
+		while (current_coordinate[0] > target_coordinate[0]) {// go north/south until both position on same row
+			change_direction('N');
+			move_one_cell();
+			//_delay_ms(500);
+			//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
+			current_coordinate[0] = current_coordinate[0] - 1;
+			debug(3, 0);
+			// move one cell and update robot's status
+		}
+	
+		while (current_coordinate[0] < target_coordinate[0]) {// go north/south until both position on same row
+			change_direction('S');
+			move_one_cell();
+			//_delay_ms(500);
+			//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
+			current_coordinate[0] = current_coordinate[0] + 1;
+			debug(4, 0);
+			// move one cell and update robot's status
+		}
+		
+		while (current_coordinate[1] > target_coordinate[1]) {
+			change_direction('W');
+			move_one_cell();
+			//_delay_ms(500);
+			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+			current_coordinate[1] = current_coordinate[1] - 1;
+			debug(1, 0);
+			// move one cell and update robot's status			
+		}
+		
+		while (current_coordinate[1] < target_coordinate[1]) {// go east/west until both position on same column
+			change_direction('E');
+			move_one_cell();
+			//_delay_ms(500);
+			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+			current_coordinate[1] = current_coordinate[1] + 1;
+			debug(2, 0);
+		}		
 	}
 }
 
@@ -1223,13 +1274,14 @@ void get_pickup_direction () {
 /** It is used to pickup a number from D1
  *
  * @param num is an int.
+ * @param skip_over is an int.
  */	
-void pickup (int num) {
+void pickup (int num, int skip_over) { // skip_over = after pickup, backward or skip over the cell
 	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-	forward_mm(30);
-	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'F');
+	//forward_mm(30);
+	follow_black_line_mm(30, 'F');
 	
 	get_pickup_direction();
 	//GLCD_Printf("#direction: %c", pickup_direction);
@@ -1242,8 +1294,13 @@ void pickup (int num) {
 	GLCD_Printf("%d", num);
 	
 	_delay_ms(500);
-	back_mm(30);
-	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'B');
+	
+	if (skip_over == 1) {
+		move_one_cell();
+	} else {
+		//back_mm(30);
+		follow_black_line_mm(30, 'B');
+	}
 }
 
 /** It is used to deposit a number in D2
@@ -1368,16 +1425,13 @@ int main() {
 	velocity(left_velocity, right_velocity);
 	
 	//forward_mm(50);
-	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	
 	//turn_robot('R');
 	
-	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 200, 'F');
+	//follow_black_line_mm(190*4, 'B'); // 20 cm = 185 mm
 	
-	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F');
-	forward_mm(50);
+	follow_black_line_mm(50, 'F');
+	//forward_mm(50);
 	move_one_cell();
 	_delay_ms(500);
 	current_grid = 1;
@@ -1401,7 +1455,16 @@ int main() {
 				
 				if (current_grid == 1) { // if robot is already in D1
 					go_to_cell_no(1, path_points[i]);
-					pickup(path_points[i+1]);			
+					
+					// decides just pickup ad back or pickup and forward
+					if (current_direction == 'E' || (current_direction == 'N' && current_coordinate[0] == 3)) {
+						pickup(path_points[i+1], 1);
+						
+						if (current_direction == 'N') current_coordinate[0]--;
+						if (current_direction == 'E') current_coordinate[1]++;
+					} else {
+						pickup(path_points[i+1], 0);
+					}		
 				} else { // robot is in D2, need to cross the bridge to go to D1
 					// 1. move to bridge point (2, 0) in D2
 					go_to_coordinate((int[]){2, 0});
@@ -1420,7 +1483,7 @@ int main() {
 					go_to_cell_no(1, path_points[i]);
 					
 					// 5. pickup
-					pickup(path_points[i+1]);
+					pickup(path_points[i+1], 0);
 				}
 			} else { // j is odd i.e. position is in D2
 				// target cell is in D2 i.e. deposit operation
@@ -1446,17 +1509,26 @@ int main() {
 					deposit(1); // 1 = number in D2 is completed
 					sum = 0;
 				} else {
-					deposit(0); // 0 = number in D2 is not complted
+					deposit(0); // 0 = number in D2 is not completed
 				}
-				GLCD_Printf("Gonna pick %d from cell#%d", path_points[i+3], path_points[i+2]);
+				
+				if (path_points[i+2] != -1) {
+					GLCD_Printf("Gonna pick %d from cell#%d", path_points[i+3], path_points[i+2]);
+				} else {
+					// continuous buzzer on finished the task
+					buzzer_on();
+					while(1);
+				}
+				
 			}
 			
 			j++;
 		}
 	}
 	
+	/*
 	// continuous buzzer on finished the task
-	buzzer_on();
+	buzzer_on();//
 	
 	while(1) {		
 		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
@@ -1466,5 +1538,5 @@ int main() {
 		print_sensor(1,1,3);	//Prints value of White Line Sensor1
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
 		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
-	}
+	}*/
 }
