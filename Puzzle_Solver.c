@@ -819,161 +819,6 @@ void turn_robot (char direction) {
 	}
 	_delay_ms(500);	
 }
-/*
-void turn_robot (char direction) {
-	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-	int digit_count = 1;
-	int digit_detected = 0;
-	int i;
-	
-	if (direction == 'L') {
-		// turn left 45 degree and check if there is a number in the cell
-		for (i=0; i<12; i++) { // 5x9=45 degrees
-		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-		
-		left_degrees(5);
-		if (Left_white_line > 16 || Center_white_line > 16 || Right_white_line > 16) {
-			flag = 1;
-		}
-	}
-	debug(1, 1);
-	
-	if (flag == 1) {
-		left_degrees(35);
-		debug(2, 1);
-	}
-	
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	while (Center_white_line <= 16) {
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		left_degrees(5);
-	}
-} else {
-	// turn right 45 degree and check if there is a number in the cell
-	for (i=0; i<12; i++) { // 5x9=45 degrees
-	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-	
-	right_degrees(5);
-	if (Left_white_line > 16 || Center_white_line > 16 || Right_white_line > 16) {
-		flag = 1;
-	}
-}
-debug(3, 1);
-
-if (flag == 1) {
-	right_degrees(35);
-	debug(4, 1);
-}
-
-Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-while (Center_white_line <= 16) {
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	right_degrees(5);
-}
-	}
-	_delay_ms(500);	
-}
-*/
-/*
-void turn_robot (char direction) {
-	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-	int digit_count = 1;
-	
-	if (direction == 'L') {
-		// turn left until left white line sensor detects white
-		if (Left_white_line > 16) {
-			while (Left_white_line > 16) {
-				left_degrees(5);
-			}
-			debug(1, 1);
-		}
-		
-		if (digit_count != 0) {
-			// turn left until left white line sensor detects black i.e. the number in the cell
-			while (Left_white_line <= 16) {
-				Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-				left_degrees(5);
-			}
-			debug(2, 1);
-			
-			left_degrees(35);
-			debug(3, 1);
-		}
-		
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		while (Center_white_line <= 16) {
-			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-			left_degrees(5);
-		}
-	} else {
-		// turn right until right white line sensor detects white
-		while (Right_white_line > 16) {
-			right_degrees(5);
-		}
-		
-		if (digit_count != 0) {
-			// turn left until left white line sensor detects black i.e. the number in the cell
-			while (Right_white_line <= 16) {
-				Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-				right_degrees(5);
-			}
-			
-			right_degrees(35);
-		}
-		
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		while (Center_white_line <= 16) {
-			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-			right_degrees(5);
-		}
-	}
-	_delay_ms(500);
-}
-*/
-
-/** It turns the robot left until encounters a black line.
- *
- */
-void turn_left () {
-	left_degrees(30); // rotate 30 degree to skip current line
-	//Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	//Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-
-	while (Center_white_line <= 16) {
-	//while (Left_white_line <= 16) {
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		//Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-		left_degrees(5);
-	}
-	_delay_ms(500);
-}
-
-/** It turns the robot right until encounter a black line.
- *
- */
-void turn_right () {
-	right_degrees(30); // rotate 30 degree to skip current line
-	//Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	//Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-	
-	while (Center_white_line <= 16) {
-	//while (Right_white_line <= 16) {
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		//Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-		right_degrees(5);
-	}
-	_delay_ms(500);
-}
 
 /** It changes the direction of the robot i.e. east/west/north/south.
  *
@@ -1113,13 +958,91 @@ void move_one_cell () {
 	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F'); // old robot 110
 }
 
+/** It is a helper function, used to match columns
+ *
+ * @param target_coordinate is an int *.
+ */	
+void match_column (int target_coordinate[]) {
+	while (current_coordinate[1] > target_coordinate[1]) {
+		change_direction('W');
+		move_one_cell();
+		//_delay_ms(500);
+		//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
+		current_coordinate[1] = current_coordinate[1] - 1;
+		debug(1, 0);
+		// move one cell and update robot's status			
+	}
+		
+	while (current_coordinate[1] < target_coordinate[1]) {// go east/west until both position on same column
+		change_direction('E');
+		move_one_cell();
+		//_delay_ms(500);
+		//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
+		current_coordinate[1] = current_coordinate[1] + 1;
+		debug(2, 0);
+	}
+}
+
+/** It is a helper function, used to match rows
+ *
+ * @param target_coordinate is an int *.
+ */	
+void match_row (int target_coordinate[]) {
+	while (current_coordinate[0] > target_coordinate[0]) {// go north/south until both position on same row
+		change_direction('N');
+		move_one_cell();
+		//_delay_ms(500);
+		//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
+		current_coordinate[0] = current_coordinate[0] - 1;
+		debug(3, 0);
+		// move one cell and update robot's status
+	}
+	
+	while (current_coordinate[0] < target_coordinate[0]) {// go north/south until both position on same row
+		change_direction('S');
+		move_one_cell();
+		//_delay_ms(500);
+		//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
+		current_coordinate[0] = current_coordinate[0] + 1;
+		debug(4, 0);
+		// move one cell and update robot's status
+	}
+}
+
 /** It is used to move the robot to a particular coordinate
  *	constraint: when we are in D1, then we cannot put co-ordinate of D2 and vice-versa
  *	to do that, first cross the bridge
  *
- * @param coordinate is an int *.
- */			
+ * @param target_coordinate is an int *.
+ */
 void go_to_coordinate (int target_coordinate[]) {
+	if (current_grid == 1) {
+		if (current_direction == 'E' || current_direction == 'W') { // match column then row
+			match_column(target_coordinate);
+			match_row(target_coordinate);		
+		} else { // current_direction = N/S  // match row then column
+			match_row(target_coordinate);
+			match_column(target_coordinate);		
+		}		
+	} else { // if robot is in d2, and target is bridge point, match row, then column
+		if (target_coordinate[0] == 2 && target_coordinate[1] == 0) {
+			match_row(target_coordinate);
+			match_column(target_coordinate);			
+		} else {
+			match_column(target_coordinate);
+			match_row(target_coordinate);
+		}
+	}
+	
+	/*if (current_direction == 'E' || current_direction == 'W') { // match column then row
+		match_column(target_coordinate);
+		match_row(target_coordinate);		
+	} else { // current_direction = N/S  // match row then column
+		match_row(target_coordinate);
+		match_column(target_coordinate);		
+	}*/
+}			
+/*void go_to_coordinate (int target_coordinate[]) {
 	if (current_direction == 'E' || current_direction == 'W') { // match column then row
 		while (current_coordinate[1] > target_coordinate[1]) {
 			change_direction('W');
@@ -1199,7 +1122,7 @@ void go_to_coordinate (int target_coordinate[]) {
 			debug(2, 0);
 		}		
 	}
-}
+}*/
 
 
 /** It is used to go to nearest co-ordinate point of a cell from current point's co-ordinate
@@ -1291,7 +1214,8 @@ void pickup (int num, int skip_over) { // skip_over = after pickup, backward or 
 	else right_led_on();
 	
 	GLCD_Clear();
-	GLCD_Printf("%d", num);
+	//GLCD_Printf("%d", num);
+	GLCD_DisplayBitmap(num); // show the num in big font
 	
 	_delay_ms(500);
 	
@@ -1360,15 +1284,17 @@ void deposit (int completed) {
 		else change_direction('N');
 	}
 	
-	forward_mm(30);
-	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'F');	
+	//forward_mm(30);
+	follow_black_line_mm(30, 'F');	
 	
 	//turn off led
 	if (pickup_direction == 'L') left_led_off();
 	else right_led_off();
 	
 	GLCD_Clear();
-	GLCD_DisplayString("Deposit");
+	//GLCD_DisplayString("Deposit");
+	GLCD_DisplayBitmap(-1); // show DEPOSIT message in big font
+	
 	if (completed == 1) {
 		buzzer_on();
 		_delay_ms(1000);
@@ -1378,8 +1304,8 @@ void deposit (int completed) {
 	}
 	GLCD_Clear();
 	
-	back_mm(30);
-	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 40, 'B');
+	//back_mm(30);
+	follow_black_line_mm(30, 'B');
 }
 
 // my functions and variables end ##########################################################################
