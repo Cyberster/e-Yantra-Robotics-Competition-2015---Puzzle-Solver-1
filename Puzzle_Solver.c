@@ -40,60 +40,6 @@ unsigned char input_str[100] = ""; // stores the raw input string
 unsigned char D1[12] = ""; // to store D1 array
 unsigned char D2[8] = ""; // to store D2 array
 
-//MOSFET switch port configuration
-void MOSFET_switch_config (void)
-{
-	DDRH = DDRH | 0x0C; //make PORTH 3 and PORTH 1 pins as output
-	PORTH = PORTH & 0xF3; //set PORTH 3 and PORTH 1 pins to 0
-
-	DDRG = DDRG | 0x04; //make PORTG 2 pin as output
-	PORTG = PORTG & 0xFB; //set PORTG 2 pin to 0
-}
-
-void turn_on_sharp234_wl (void) //turn on Sharp IR range sensors 2, 3, 4 and white line sensor's red LED
-{
-	PORTG = PORTG & 0xFB;
-}
-
-void turn_off_sharp234_wl (void) //turn off Sharp IR range sensors 2, 3, 4 and white line sensor's red LED
-{
-	PORTG = PORTG | 0x04;
-}
-
-void turn_on_sharp15 (void) //turn on Sharp IR range sensors 1,5
-{
-	PORTH = PORTH & 0xFB;
-}
-
-void turn_off_sharp15 (void) //turn off Sharp IR range sensors 1,5
-{
-	PORTH = PORTH | 0x04;
-}
-
-void turn_on_ir_proxi_sensors (void) //turn on IR Proximity sensors
-{
-	PORTH = PORTH & 0xF7;
-}
-
-void turn_off_ir_proxi_sensors (void) //turn off IR Proximity sensors
-{
-	PORTH = PORTH | 0x08;
-}
-
-void turn_on_all_proxy_sensors (void) // turn on Sharp 2, 3, 4, red LED of the white line sensors
-// Sharp 1, 5 and IR proximity sensor
-{
-	PORTH = PORTH & 0xF3; //set PORTH 3 and PORTH 1 pins to 0
-	PORTG = PORTG & 0xFB; //set PORTG 2 pin to 0
-}
-
-void turn_off_all_proxy_sensors (void) // turn off Sharp 2, 3, 4, red LED of the white line sensors
-// Sharp 1, 5 and IR proximity sensor
-{
-	PORTH = PORTH | 0x0C; //set PORTH 3 and PORTH 1 pins to 1
-	PORTG = PORTG | 0x04; //set PORTG 2 pin to 1
-}
-
 //Function to configure LCD port
 void lcd_port_config (void)
 {
@@ -157,7 +103,6 @@ void LED_pin_config (void) {
 //Function to Initialize PORTS
 void port_init()
 {
-	MOSFET_switch_config();
 	lcd_port_config();
 	adc_pin_config();
 	motion_pin_config();	
@@ -506,6 +451,7 @@ SIGNAL(SIG_USART2_RECV) {		// ISR for receive complete interrupt
 	//if (counter < 12) strcat(D1, &data);
 	//else strcat(D2, &data);
 	strcat(input_str, &data);
+	GLCD_DisplayChar(data);
 
 	//lcd_wr_command(0x01);
 	//lcd_cursor(1, 1);
@@ -1033,97 +979,7 @@ void go_to_coordinate (int target_coordinate[]) {
 			match_row(target_coordinate);
 		}
 	}
-	
-	/*if (current_direction == 'E' || current_direction == 'W') { // match column then row
-		match_column(target_coordinate);
-		match_row(target_coordinate);		
-	} else { // current_direction = N/S  // match row then column
-		match_row(target_coordinate);
-		match_column(target_coordinate);		
-	}*/
-}			
-/*void go_to_coordinate (int target_coordinate[]) {
-	if (current_direction == 'E' || current_direction == 'W') { // match column then row
-		while (current_coordinate[1] > target_coordinate[1]) {
-			change_direction('W');
-			move_one_cell();
-			//_delay_ms(500);
-			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
-			current_coordinate[1] = current_coordinate[1] - 1;
-			debug(1, 0);
-			// move one cell and update robot's status			
-		}
-		
-		while (current_coordinate[1] < target_coordinate[1]) {// go east/west until both position on same column
-			change_direction('E');
-			move_one_cell();
-			//_delay_ms(500);
-			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
-			current_coordinate[1] = current_coordinate[1] + 1;
-			debug(2, 0);
-		}
-		
-		while (current_coordinate[0] > target_coordinate[0]) {// go north/south until both position on same row
-			change_direction('N');
-			move_one_cell();
-			//_delay_ms(500);
-			//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
-			current_coordinate[0] = current_coordinate[0] - 1;
-			debug(3, 0);
-			// move one cell and update robot's status
-		}
-	
-		while (current_coordinate[0] < target_coordinate[0]) {// go north/south until both position on same row
-			change_direction('S');
-			move_one_cell();
-			//_delay_ms(500);
-			//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
-			current_coordinate[0] = current_coordinate[0] + 1;
-			debug(4, 0);
-			// move one cell and update robot's status
-		}		
-	} else { // current_direction = N/S  // match row then column
-		while (current_coordinate[0] > target_coordinate[0]) {// go north/south until both position on same row
-			change_direction('N');
-			move_one_cell();
-			//_delay_ms(500);
-			//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
-			current_coordinate[0] = current_coordinate[0] - 1;
-			debug(3, 0);
-			// move one cell and update robot's status
-		}
-	
-		while (current_coordinate[0] < target_coordinate[0]) {// go north/south until both position on same row
-			change_direction('S');
-			move_one_cell();
-			//_delay_ms(500);
-			//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
-			current_coordinate[0] = current_coordinate[0] + 1;
-			debug(4, 0);
-			// move one cell and update robot's status
-		}
-		
-		while (current_coordinate[1] > target_coordinate[1]) {
-			change_direction('W');
-			move_one_cell();
-			//_delay_ms(500);
-			//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
-			current_coordinate[1] = current_coordinate[1] - 1;
-			debug(1, 0);
-			// move one cell and update robot's status			
-		}
-		
-		while (current_coordinate[1] < target_coordinate[1]) {// go east/west until both position on same column
-			change_direction('E');
-			move_one_cell();
-			//_delay_ms(500);
-			//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
-			current_coordinate[1] = current_coordinate[1] + 1;
-			debug(2, 0);
-		}		
-	}
-}*/
-
+}
 
 /** It is used to go to nearest co-ordinate point of a cell from current point's co-ordinate
  *
@@ -1196,10 +1052,10 @@ void get_pickup_direction () {
 
 /** It is used to pickup a number from D1
  *
- * @param num is an int.
- * @param skip_over is an int.
+ * @param num is an int. It the number to be picked.
+ * @param skip_over is an int. It decides whether backward or skip over the cell after pickup a number
  */	
-void pickup (int num, int skip_over) { // skip_over = after pickup, backward or skip over the cell
+void pickup (int num, int skip_over) {
 	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
@@ -1229,8 +1085,10 @@ void pickup (int num, int skip_over) { // skip_over = after pickup, backward or 
 
 /** It is used to deposit a number in D2
  *
+ * @param completed is an int. It decides whether a number in D2 is completed or not. 1 = completed, 2 = not completed.
+ * @param isEnd is an int. It decides whether the robot has finished the task. 1 = finished, 2 = not finished.
  */
-void deposit (int completed) {
+void deposit (int completed, int isEnd) {
 	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
@@ -1295,33 +1153,41 @@ void deposit (int completed) {
 	//GLCD_DisplayString("Deposit");
 	GLCD_DisplayBitmap(-1); // show DEPOSIT message in big font
 	
-	if (completed == 1) {
+	if (completed == 1 && isEnd == 0) { // 1000ms buzzer if number in D2 completed but task is not
 		buzzer_on();
 		_delay_ms(1000);
 		buzzer_off();
+	} else if (completed == 1 && isEnd == 1) { // the robot has finished the task
+		// continuous buzzer
+		buzzer_on();
+		while(1);
 	} else {
 		_delay_ms(1000);
 	}
 	GLCD_Clear();
 	
-	//back_mm(30);
-	follow_black_line_mm(30, 'B');
+	if (isEnd == 0) { // the robot has not finished the task yet
+		//back_mm(30);
+		follow_black_line_mm(30, 'B');
+	}
 }
 
 // my functions and variables end ##########################################################################
 
-//Main Function
+//Main Function start ######################################################################################
 int main() {
 	init_devices();
 	
 	// make the robot busy until detecting boot switch i.e. interrupt is pressed
 	while (1) {
 		if((PINE | 0x7F) == 0x7F) { // interrupt switch is pressed
+			GLCD_Clear();
 			break;
 		}
 	}
 	
 	/*************************** converting input string to int array start ****************************/
+	//	it must be done after pressing the interrupt key else data will be lost
 	int i, j;
 	int path_points[100]; // -1 refers to invalid/null point; odd index = the point is in D1, even index = the point is in D2
 	for (i=0; i<100; i++) path_points[i] = -1;
@@ -1432,12 +1298,17 @@ int main() {
 				
 				// 5. deposit
 				if (sum == path_points[i+1]) {
-					deposit(1); // 1 = number in D2 is completed
+					if (path_points[i+2] == -1) {
+						deposit(1, 1); // 1 = number in D2 is completed, 1 = task completed respectively
+					} else {
+						deposit(1, 0); // 1 = number in D2 is completed, 0 = task not completed respectively
+					}
 					sum = 0;
 				} else {
-					deposit(0); // 0 = number in D2 is not completed
+					deposit(0, 0); // 0 = number in D2 is not completed
 				}
 				
+				// it should be deleted before video submission/final
 				if (path_points[i+2] != -1) {
 					GLCD_Printf("Gonna pick %d from cell#%d", path_points[i+3], path_points[i+2]);
 				} else {
@@ -1451,18 +1322,5 @@ int main() {
 			j++;
 		}
 	}
-	
-	/*
-	// continuous buzzer on finished the task
-	buzzer_on();//
-	
-	while(1) {		
-		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-
-		print_sensor(1,1,3);	//Prints value of White Line Sensor1
-		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
-		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
-	}*/
 }
+//Main Function end ########################################################################################
