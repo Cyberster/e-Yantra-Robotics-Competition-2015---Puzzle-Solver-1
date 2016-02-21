@@ -16,7 +16,7 @@
 */
 
 // Note: that predefined function definitions are written in Allman indent style
-//		and out function definitions are written in K&R indent style
+//		and our function definitions are written in K&R indent style
 //		reference: https://en.wikipedia.org/wiki/Indent_style
 
 #define F_CPU 14745600
@@ -548,11 +548,9 @@ void debug (int id, int pause) {
 
 /*
  * Function Name:	left_led_on
- * Input :			
- *					
+ * Input :				
  * Output :			It turns on the left RGB LED
  * Logic:			PORT G0 is configured for left RGB LED, writing logic high to PG0
- *					
  * Example Call:	left_led_on()
  */
 void left_led_on (void) {
@@ -564,11 +562,9 @@ void left_led_on (void) {
 
 /*
  * Function Name:	left_led_off
- * Input :			
- *					
+ * Input :					
  * Output :			It turns of the left RGB LED
- * Logic:			PORT G0 is configured for left RGB LED, writing logic low to PG0
- *					
+ * Logic:			PORT G0 is configured for left RGB LED, writing logic low to PG0		
  * Example Call:	left_led_on()
  */
 void left_led_off (void) {
@@ -580,11 +576,9 @@ void left_led_off (void) {
 
 /*
  * Function Name:	right_led_on
- * Input :			
- *					
+ * Input :				
  * Output :			It turns on the right RGB LED
- * Logic:			PORT G1 is configured for right RGB LED, writing logic high to PG1
- *					
+ * Logic:			PORT G1 is configured for right RGB LED, writing logic high to PG1			
  * Example Call:	right_led_on()
  */
 void right_led_on (void) {
@@ -596,11 +590,9 @@ void right_led_on (void) {
 
 /*
  * Function Name:	right_led_off
- * Input :			
- *					
+ * Input :					
  * Output :			It turns on the right RGB LED
- * Logic:			PORT G1 is configured for right RGB LED, writing logic low to PG1
- *					
+ * Logic:			PORT G1 is configured for right RGB LED, writing logic low to PG1			
  * Example Call:	right_led_off()
  */
 void right_led_off (void) {
@@ -669,10 +661,8 @@ int * get_nearest_point (int current_point[2], int target_cell[4][2]) {
 /*
  * Function Name:	read_wl_sensor_values
  * Input :			
- *					
  * Output :			It updates global variables Left_white_line, Center_white_line, Right_white_line
  * Logic:			It reads all 3 white line sensor values by using function ADC_Conversion()
- *					
  * Example Call:	read_wl_sensor_values()
  */
 void read_wl_sensor_values () {
@@ -683,8 +673,8 @@ void read_wl_sensor_values () {
 
 /*
  * Function Name:	follow_black_line
- * Input :			Left_white_line, Center_white_line, Right_white_line
- *					
+ * Input :			Left_white_line, Center_white_line, Right_white_line are global variables,
+ *					direction can be 'F' or 'B' as forward or backward respectively
  * Output :			It follows a 1cm thick black line on white surface
  * Logic:			To follow a 1cm black line, we can linearly forward the robot if all three white line sensors
  *					are on white surface or the center white line sensor is on the black surface. We decrease velocity of the
@@ -700,24 +690,32 @@ void follow_black_line (char direction) {
 	flag = 0;
 		
 	if (((Left_white_line <= BNW_Thresh) && (Center_white_line <= BNW_Thresh) && (Right_white_line <= BNW_Thresh)) || (Center_white_line > BNW_Thresh)) {
-		flag=1;
+		flag = 1;
 		if (direction == 'F') forward();
 		else back();
 		velocity(left_velocity, right_velocity);
 	}
 
 	if((Left_white_line <= BNW_Thresh) && (Center_white_line <= BNW_Thresh) && (Right_white_line > BNW_Thresh) && (flag == 0)) {
-		flag=1;
-		if (direction == 'F') forward();
-		else back();
-		velocity(left_velocity+30, right_velocity-50);
+		flag = 1;
+		if (direction == 'F') {
+			forward();
+			velocity(left_velocity+30, right_velocity-50);
+		} else {
+			back();
+			velocity(left_velocity-50, right_velocity+30);
+		}
 	}
 
 	if((Left_white_line > BNW_Thresh) && (Center_white_line <= BNW_Thresh) && (Right_white_line <= BNW_Thresh) && (flag == 0)) {
-		flag=1;
-		if (direction == 'F') forward();
-		else back();
-		velocity(left_velocity-50, right_velocity+30);
+		flag = 1;
+		if (direction == 'F') {
+			forward();
+			velocity(left_velocity-50, right_velocity+30);
+		} else {
+			back();
+			velocity(left_velocity+30, right_velocity-50);
+		}
 	}
 	
 	//GLCD_Clear();
@@ -729,6 +727,18 @@ void follow_black_line (char direction) {
  *
  * @param DistanceInMM is an unsigned int.
  * @param direction is a char.
+ */
+
+/*
+ * Function Name:	follow_black_line_mm
+ * Input :			DistanceInMM - is a unsigned integer, 
+ *					direction - is a char variable
+ * Output :			It follows a 1cm thick black line up to a specific distance
+ * Logic:			It calculates required shaft count to travel up to DistanceInMM
+ *					and follows the black line. ShaftCountRight and ShaftCountLeft are initially
+ *					set to 0. While moving the robot, we increase them and When the ShaftCountRight
+ *					or ShaftCountLeft reaches as required, we stop the robot
+ * Example Call:	follow_black_line_mm(100, 'F')
  */
 void follow_black_line_mm (unsigned int DistanceInMM, char direction) {
 	float ReqdShaftCount = 0;
@@ -753,11 +763,26 @@ void follow_black_line_mm (unsigned int DistanceInMM, char direction) {
 	stop(); //Stop robot	
 }
 
-/** It turns the robot left/right until encounters a black line.
+/** It turns the robot left/right by 5 degrees until encounters a black line.
  *
  * @param direction is a char.
  */
-//void turn_robot (char direction, int digit_count) {
+
+/*
+ * Function Name:	turn_robot
+ * Input :			direction is a char variable which can be 'L' or 'R' as left or right respectively
+ * Output :			This function rotates the robot perfect 90 degrees left or right
+ * Logic:			At first it reads all white line sensor values and increase velocity to current velocity + 15
+ *					left_degrees(90)3is static and does not always as per hardware and physical limitations.
+ *					So, we have to rotate the robot dynamically. We rotate the robot by 5 degrees until
+ *					the center white line sensor detects a black line. But to do that we have to cross/overcome 
+ *					current black line and the thick black number inside a cell. If direction is 'L' then
+ *					we rotate the robot left by 75 degrees using left_degrees(75) and if direction is 'R'
+ *					then rotate the robot right by 75 degrees using right_degrees(75). After that, we rotate
+ *					the robot by 5 degrees in mentioned direction until the center white line sensor detects
+ *					a black line.		
+ * Example Call:	turn_robot('L')
+ */
 void turn_robot (char direction) {
 	read_wl_sensor_values();
 	velocity(current_velocity+15, current_velocity+15);
@@ -789,6 +814,47 @@ void turn_robot (char direction) {
  *
  * @param desired_direction is an unsigned char.
  */
+
+/*
+ * Function Name:	change_direction
+ * Input :			desired_direction is a unsigned char variable which can be 'E'/'W'/'N'/'S' as
+ *					ease, west, north or south respectively
+ * Output :			It changes the robots direction to ease, west, north or south and updates its current 
+ *					direction which is stored in global variable current_direction
+ * Logic:			if current direction is north and desired direction is west then
+ *						we turn the robot left by 90 degrees using turn_robot('L') and updates current direction to west
+ *					if current direction is north and desired direction is east then
+ *						we turn the robot right by 90 degrees using turn_robot('R') and updates current direction to east
+ *					if current direction is north and desired direction is south then
+ *						if current column is 0 then we turn the robot right by 90 degrees using turn_robot('R') two times
+ *						else we turn the robot left by 90 degrees using turn_robot('L') two times
+ *						and update current direction to south
+ *					if current direction is south and desired direction is north then
+ *						if current column is 0 then we turn the robot left by 90 degrees using turn_robot('L') two times
+ *						else we turn the robot right by 90 degrees using turn_robot('R') two times
+ *						and update current direction to north
+ *					if current direction is south and desired direction is east then
+ *						we turn the robot left by 90 degrees using turn_robot('L') and updates current direction to east
+ *					if current direction is south and desired direction is west then
+ *						we turn the robot right by 90 degrees using turn_robot('R') and updates current direction to west
+ *					if current direction is east and desired direction is north then
+ *						we turn the robot left by 90 degrees using turn_robot('L') and updates current direction to north	
+ *					if current direction is east and desired direction is west then
+ *						if current row is 0 then we turn the robot right by 90 degrees using turn_robot('R') two times
+ *						else we turn the robot left by 90 degrees using turn_robot('L') two times
+ *						and update current direction to west
+ *					if current direction is east and desired direction is south then
+ *						we turn the robot right by 90 degrees using turn_robot('R') and updates current direction to south
+ *					if current direction is west and desired direction is north then
+ *						we turn the robot right by 90 degrees using turn_robot('R') and updates current direction to north
+ *					if current direction is west and desired direction is east then
+ *						if current row is 0 then we turn the robot left by 90 degrees using turn_robot('L') two times
+ *						else we turn the robot right by 90 degrees using turn_robot('R') two times
+ *						and update current direction to east
+ *					if current direction is west and desired direction is south then
+ *						we turn the robot left by 90 degrees using turn_robot('L') and updates current direction to south
+ * Example Call:	
+ */
 void change_direction (unsigned char desired_direction) {
 	if (current_direction == desired_direction) return;
 	
@@ -801,8 +867,7 @@ void change_direction (unsigned char desired_direction) {
 		turn_robot('R');
 		current_direction = 'E';
 	} else if (current_direction == 'N' && desired_direction == 'S') { // north
-		if ((current_grid == 1 && current_coordinate[1] == 0) ||
-			(current_grid == 2 && current_coordinate[1] == 0)) {
+		if (current_coordinate[1] == 0) {
 			turn_robot('R');
 			turn_robot('R');
 		} else {
@@ -812,8 +877,7 @@ void change_direction (unsigned char desired_direction) {
 
 		current_direction = 'S';
 	} else if (current_direction == 'S' && desired_direction == 'N') { //south
-		if ((current_grid == 1 && current_coordinate[1] == 0) ||
-			(current_grid == 2 && current_coordinate[1] == 0)) {
+		if (current_coordinate[1] == 0) {
 			turn_robot('L');
 			turn_robot('L');
 		} else {
@@ -832,8 +896,7 @@ void change_direction (unsigned char desired_direction) {
 		turn_robot('L');
 		current_direction = 'N';
 	} else if (current_direction == 'E' && desired_direction == 'W') { //east
-		if ((current_grid == 1 && current_coordinate[0] == 0) ||
-			(current_grid == 2 && current_coordinate[0] == 0 )) {
+		if (current_coordinate[0] == 0) {
 			turn_robot('R');
 			turn_robot('R');	
 		} else {
@@ -849,8 +912,7 @@ void change_direction (unsigned char desired_direction) {
 		turn_robot('R');	
 		current_direction = 'N';
 	} else if (current_direction == 'W' && desired_direction == 'E') { //west
-		if ((current_grid == 1 && current_coordinate[0] == 0) ||
-			(current_grid == 2 && current_coordinate[0] == 0 )) {
+		if (current_coordinate[0] == 0) {
 			turn_robot('L');
 			turn_robot('L');
 		} else {
@@ -868,42 +930,28 @@ void change_direction (unsigned char desired_direction) {
 /** It follows a black line until encounter a 3x3 cm black square.
  *
  */
-void move_one_cell () {
-	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-	
-	/*if (current_cell_no == -1) { // if the robot is in start position
-		// forward until detecting 1cm black line if there is no previous rotation
-		//while (!((Left_white_line > 16) || (Center_white_line > 16) || (Right_white_line > 16))) { // center on black	
-		while (!((Left_white_line <= 16) && (Center_white_line > 16) && (Right_white_line <= 16))) { // center on black
-			Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-			Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-		
-			print_sensor(1,1,3);	//Prints value of White Line Sensor1
-			print_sensor(1,5,2);	//Prints Value of White Line Sensor2
-			print_sensor(1,9,1);	//Prints Value of White Line Sensor3		
-		
-			follow_black_line(Left_white_line, Center_white_line, Right_white_line);
-		}
-		//velocity(current_velocity, current_velocity);
-		//forward_mm(20);
-		
-		buzzer_on();
-		_delay_ms(50);		//delay
-		buzzer_off();
-	}*/
 
+/*
+ * Function Name:	move_one_cell
+ * Input :			Reads global variables Left_white_line, Center_white_line, Right_white_line, BNW_Thresh
+ *					
+ * Output :			It moved the robot 1 cell in forward direction i.e. robot forwards until get a 3x3 black square
+ * Logic:			If right and center white line sensors are on black surface and left white line sensor is on white
+ *						surface, we also detect it as a 3x3cm black square.
+ *					If left and center white line sensors are on the black surface and right white line sensor is on
+ *						white surface, we detect it as a 3x3cm black square.
+ *					Again, if all three white line sensors are on black surface, we also detect it as a 3x3cm black square.					
+ * Example Call:	move_one_cell()
+ */
+void move_one_cell () {
+	read_wl_sensor_values();
+	
 	// forward until detecting next 3x3 black box
 	//while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
 	while (!(((Left_white_line > BNW_Thresh) && (Center_white_line > BNW_Thresh)) || ((Center_white_line > BNW_Thresh) && (Right_white_line > BNW_Thresh)) // 1-2 or 3-2 on white
 			|| ((Left_white_line > BNW_Thresh) && (Center_white_line > BNW_Thresh) && (Right_white_line > BNW_Thresh)))) { // center on black
 		read_wl_sensor_values();
-		
-		/*print_sensor(1,1,3);	//Prints value of White Line Sensor1
-		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
-		print_sensor(1,9,1);	//Prints Value of White Line Sensor3*/
+
 		//GLCD_Clear();
 		//GLCD_Printf("%3d %3d %3d ", Left_white_line, Center_white_line, Right_white_line);
 		
@@ -920,21 +968,34 @@ void move_one_cell () {
 	//_delay_ms(500);
 	
 	// adjust 11 cm forward
-	forward_mm(50);
+	//forward_mm(50);
 	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F'); // old robot 110
+	follow_black_line_mm(50, 'F');
 }
 
 /** It is a helper function, used to match columns
  *
  * @param target_coordinate is an int *.
- */	
+ */
+
+/*
+ * Function Name:	match_column
+ * Input :			target_coordinate is a int array which holds a co-ordinate i.e. row, column number
+ * Output :			It updates current co-ordinate's column number i.e. the global variable current_coordinate[1]
+ * Logic:			Until current co-ordinate's column > target co-ordinates's column, we repeat the process indented below
+ *						change direction to west by using change_direction('W') and then move the robot by one cell 
+ *						forward by using move_one_cell(). After that we update current co-ordinate's column number by decreasing 1
+ *					All after above, Until current co-ordinate's column < target co-ordinates's column, we repeat the process indented below
+ *						change direction to east by using change_direction('E') and then move the robot by one cell
+ *						forward by using move_one_cell(). After that we update current co-ordinate's column number by increase 1
+ * Example Call:	match_column((int){1, 3})
+ */
 void match_column (int target_coordinate[]) {
 	while (current_coordinate[1] > target_coordinate[1]) {
 		change_direction('W');
 		move_one_cell();
 		//_delay_ms(500);
-		//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
-		current_coordinate[1] = current_coordinate[1] - 1;
+		current_coordinate[1]--;
 		//debug(1, 0);
 		// move one cell and update robot's status			
 	}
@@ -943,8 +1004,7 @@ void match_column (int target_coordinate[]) {
 		change_direction('E');
 		move_one_cell();
 		//_delay_ms(500);
-		//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
-		current_coordinate[1] = current_coordinate[1] + 1;
+		current_coordinate[1]++;
 		//debug(2, 0);
 	}
 }
@@ -953,13 +1013,25 @@ void match_column (int target_coordinate[]) {
  *
  * @param target_coordinate is an int *.
  */	
+
+/*
+ * Function Name:	match_row
+ * Input :			target_coordinate is a int array which holds a co-ordinate i.e. row, column number
+ * Output :			It updates current co-ordinate's row number i.e. the global variable current_coordinate[0]
+ * Logic:			Until current co-ordinate's row > target co-ordinates's row, we repeat the process indented below
+ *						change direction to north by using change_direction('N') and then move the robot by one cell 
+ *						forward by using move_one_cell(). After that we update current co-ordinate's column number by decreasing 1
+ *					All after above, Until current co-ordinate's row < target co-ordinates's row, we repeat the process indented below
+ *						change direction to south by using change_direction('S') and then move the robot by one cell
+ *						forward by using move_one_cell(). After that we update current co-ordinate's column number by increase 1
+ * Example Call:	match_row((int){1, 3})
+ */
 void match_row (int target_coordinate[]) {
 	while (current_coordinate[0] > target_coordinate[0]) {// go north/south until both position on same row
 		change_direction('N');
 		move_one_cell();
 		//_delay_ms(500);
-		//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
-		current_coordinate[0] = current_coordinate[0] - 1;
+		current_coordinate[0]--;
 		//debug(3, 0);
 		// move one cell and update robot's status
 	}
@@ -968,8 +1040,7 @@ void match_row (int target_coordinate[]) {
 		change_direction('S');
 		move_one_cell();
 		//_delay_ms(500);
-		//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
-		current_coordinate[0] = current_coordinate[0] + 1;
+		current_coordinate[0]++;
 		//debug(4, 0);
 		// move one cell and update robot's status
 	}
@@ -980,6 +1051,27 @@ void match_row (int target_coordinate[]) {
  *	to do that, first cross the bridge
  *
  * @param target_coordinate is an int *.
+ */
+
+/*
+ * Function Name:	go_to_coordinate
+ * Input :			target_coordinate is a int array which holds a co-ordinate i.e. row, column number
+ * Output :			It moves the robot to a specific co-ordinate by using match_column and match_row functions
+ * Logic:			If the robot is currently in D1 then
+ *						If current direction is east or west then
+ *							move the robot and match robot's and target co-ordinate's column
+ *							move the robot and match robot's and target co-ordinate's row
+ *						else
+ *							move the robot and match robot's and target co-ordinate's row
+ *							move the robot and match robot's and target co-ordinate's column
+ *					else
+ *						If target co-ordinate's row number is 2 and column number is 0 then
+ *							move the robot and match robot's and target co-ordinate's row
+ *							move the robot and match robot's and target co-ordinate's column
+ *						else
+ *							move the robot and match robot's and target co-ordinate's column
+ *							move the robot and match robot's and target co-ordinate's row
+ * Example Call:	go_to_coordinate((int){1, 3})
  */
 void go_to_coordinate (int target_coordinate[]) {
 	if (current_grid == 1) {
@@ -1005,10 +1097,23 @@ void go_to_coordinate (int target_coordinate[]) {
  *
  * @param target_division is an int.
  * @param target_cell_no is an int.
- */	
+ */
+
+/*
+ * Function Name:	go_to_cell_no
+ * Input :			target_division - is an int variable which can be 1 or 2 as D1 or D2 respectively,
+ *					target_cell_no - is an int variable which can be 0-11 in D1 and 0-23 in D2
+ * Output :			It moves the robot to nearest among 4 points (top-left, top-right, bottom-right, bottom-left)
+ *					of a given cell number with target division
+ * Logic:			It creates an integer pointer to store a co-ordinate. Then if the target division is 1 i.e. D1
+ *					then copy returned data from get_nearest_point(current_coordinate, d1_position_map[target_cell_no])
+ *						to nearest_point. Note that we are using d1_position_map here
+ *					else copy returned data from get_nearest_point(current_coordinate, d2_position_map[target_cell_no])
+ *						to nearest_point. Note that we are using d2_position_map here this time			
+ * Example Call:	go_to_cell_no(2, 5)
+ */
 void go_to_cell_no (int target_division, int target_cell_no) {
-	int * nearest_point;
-	nearest_point = (int *) malloc(2 * sizeof(int));
+	int * nearest_point = (int *) malloc(2 * sizeof(int));
 	
 	if (target_division == 1) { // go to cell no in D1
 		memcpy(nearest_point, get_nearest_point(current_coordinate, d1_position_map[target_cell_no]), 2 * sizeof(int));
@@ -1020,28 +1125,50 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 	
 	// after reaching, update current_cell_no
 	current_cell_no = target_cell_no;
-
-	/*buzzer_on();
-	_delay_ms(100);
-	buzzer_off();
-	_delay_ms(100);
-	buzzer_on();
-	_delay_ms(100);
-	buzzer_off();*/
 }
 
 /** It is used to get the pickup direction i.e. L or R i.e. left or right respectively
  *
  */
+
+/*
+ * Function Name:	get_pickup_direction
+ * Input :			
+ * Output :			It updates the global variable pickup_direction which can be 'L' or 'R' as left or right respectively
+ * Logic:			Integer left and right is initialized with 0
+ *					if current direction of the robot is north then
+ *						i = 0
+ *						if i < 4 then
+ *							if current co-ordinate's column number > d1_position_map[current_cell_no][i][1]	then left = left + 1
+ *							else current co-ordinate's column number < d1_position_map[current_cell_no][i][1] then right = right + 1
+ *							i = i + 1
+ *					if current direction of the robot is south then
+ *						i = 0
+ *						if i < 4 then
+ *							if current co-ordinate's column number > d1_position_map[current_cell_no][i][1]	then right = right + 1
+ *							else current co-ordinate's column number < d1_position_map[current_cell_no][i][1] then left = left + 1
+ *							i = i + 1
+ *					if current direction of the robot is east then
+ *						i = 0
+ *						if i < 4 then
+ *							if current co-ordinate's row number > d1_position_map[current_cell_no][i][0]	then left = left + 1
+ *							else current co-ordinate's row number < d1_position_map[current_cell_no][i][0] then right = right + 1
+ *							i = i + 1
+ *					if current direction of the robot is west then
+ *						i = 0
+ *						if i < 4 then
+ *							if current co-ordinate's row number > d1_position_map[current_cell_no][i][0] then right = right + 1
+ *							else current co-ordinate's row number < d1_position_map[current_cell_no][i][0] then left = left + 1
+ *							i = i + 1
+ *					if left > right then set pickup direction to 'L' as left
+ *					else set pickup direction to 'R' as right
+ * Example Call:	
+ */
 void get_pickup_direction () {
-	// current_direction, current_cell_no, current_coordinate, current_grid
-	//char direction;
 	int i, left = 0, right = 0;	
 	
 	if (current_direction == 'N') { // if north, just compare columns
 		for (i=0; i<4; i++) {
-			//GLCD_Printf("@ %d~%d,", current_coordinate[1], d1_position_map[current_cell_no][i][1]);
-			//GLCD_Printf("@%1d,%1d-%2d-%1d-%1d,", current_coordinate[0], current_coordinate[1], current_cell_no, i, 1);
 			if (current_coordinate[1] > d1_position_map[current_cell_no][i][1]) left++;
 			else if (current_coordinate[1] < d1_position_map[current_cell_no][i][1]) right++;
 		}
@@ -1062,12 +1189,8 @@ void get_pickup_direction () {
 		}		
 	}
 	
-	//GLCD_Printf(" #L: %d, R: %d", left, right);
-	
 	if (left > right) pickup_direction = 'L';
 	else pickup_direction = 'R';
-	
-	//return direction;
 }
 
 /** It is used to pickup a number from D1
@@ -1075,10 +1198,26 @@ void get_pickup_direction () {
  * @param num is an int. It the number to be picked.
  * @param skip_over is an int. It decides whether backward or skip over the cell after pickup a number
  */	
+
+/*
+ * Function Name:	pickup
+ * Input :			num - is an integer number which can be 0-9 present in D1,
+ *					skip_over - is an integer number which can be 0 or 1. It decides move forward of backward after pickup.
+ * Output :			It picks up a number from D1 by forwarding the robot half of the cell and then pickup by 
+ *					glowing left or right RGB LEDs and showing the number in the GLCD and after pickup the 
+ *					robot forward and skip over the cell or backwards and returns to previous node as per travel cost
+ * Logic:			At first we read all white line sensor values
+ *					Then we forward the robot by 50 mm to get to the center of the cell before pickup a number
+ *					the we calculate pickup direction.
+ *					If pickup direction is left, then turn on left RGB LED
+ *					else then turn on right RGB LED
+ *					After that clear GLCD screen and display the number we have picked up and delay for 500 ms
+ *					Then, if skip_over is equals to 1 then call move_one_cell()
+ *					else follow black line forward for 25 mm by follow_black_line_mm(25, 'B')
+ * Example Call:	pickup(9, 1)
+ */
 void pickup (int num, int skip_over) {
-	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+	read_wl_sensor_values(); //may be not needed
 	//forward_mm(30);
 	follow_black_line_mm(50, 'F');
 	
@@ -1108,10 +1247,39 @@ void pickup (int num, int skip_over) {
  * @param completed is an int. It decides whether a number in D2 is completed or not. 1 = completed, 2 = not completed.
  * @param isEnd is an int. It decides whether the robot has finished the task. 1 = finished, 2 = not finished.
  */
+
+/*
+ * Function Name:	deposit
+ * Input :			completed - is an integer variable which can be 0 or 1. It determines if a number in D2 is completed or not,
+ *					isEnd - is an integer variable which can be 0 or 1. It determines if robot has ended the whole task or not.
+ * Output :			It deposits the number that picked from D1 to a cell in D2 by maintaining pickup and deposit direction equal.
+ *					While depositing a number, the robot turns the RGB LED off, shows a deposit message on GLCD and a buzzes for
+ *					for 1000ms if a number in D2 is completed, and continuous buzzer if whole task is completed.
+ * Logic:			Read the white line sensor values.
+ *					If current_coordinate is on top left of the cell then
+ *						If pickup direction is left then change robot's direction to south
+ *						else change robot's direction to east
+ *					If current_coordinate is on top right of the cell then
+ *						If pickup direction is left then change robot's direction to west
+ *						else change robot's direction to south	
+ *					If current_coordinate is on bottom right of the cell then
+ *						If pickup direction is left then change robot's direction to north
+ *						else change robot's direction to west		
+ *					If current_coordinate is on bottom left of the cell then
+ *						If pickup direction is left then change robot's direction to east
+ *						else change robot's direction to north
+ *					After that, follow black line for 50 mm to get to the center of the cell
+ *					If pickup direction is left, then turn off the left RGB LED, else turn off the right RGB LED
+ *					Clear the GLCD and show the deposit message
+ *					If completed is equal to 1 and isEnd is equal to 0 then turn on buzzer for 1000 ms
+ *					else, if completed is equal to 1 and isEnd is equal to 1 turn on buzzer for lifetime
+ *					else delay for 1000 ms
+ *					After all these steps, clear the GLCD
+ *					If isEnd is equal to 0 then follow black line in backward direction for 25 mm
+ * Example Call:	
+ */
 void deposit (int completed, int isEnd) {
-	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+	read_wl_sensor_values(); // maybe not needed
 	
 	// current_direction, current_cell_no, current_coordinate, current_grid, pickup_direction
 	//GLCD_Clear();
