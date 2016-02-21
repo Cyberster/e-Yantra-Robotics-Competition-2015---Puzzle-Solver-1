@@ -1,21 +1,39 @@
-/************************************************************************************
- *	Team ID: eYRCPlus-PS1#2678
- *	Team Members:
- *		- Avick Dutta (team leader)
- *		- Arpan Das
- *		- Subhendu Hazra
- *		- Asesh Basu
-*************************************************************************************/
+/*
+* Team Id :			eYRCPlus-PS1#2678
+* Author List :		Avick Dutta (team leader), Arpan Das, Subhendu Hazra, Asesh Basu
+* Filename:			Puzzle_Solver.c
+* Theme:			Puzzle Solver Robot (GLCD) - eYRCPlus
+* Functions:		left_led_on, left_led_off, right_led_on, right_led_off,
+*					get_point_cost, get_nearest_point, follow_black_line, follow_black_line_mm,
+*					turn_robot, change_direction, move_one_cell, match_column, match_row,
+*					go_to_coordinate, go_to_cell_no, get_pickup_direction, pickup, deposit
+* Global Variables:	ADC_Value, flag, Left_white_line, Center_white_line, Right_white_line,
+*					ShaftCountLeft, ShaftCountRight, Degrees, data, input_str, d1_position_map, 
+*					d2_position_map, current_velocity, current_direction,
+*					pickup_direction, current_grid, current_cell_no, current_coordinate,
+*					BNW_Thresh, left_velocity_float, right_velocity_float,
+*					left_velocity, right_velocity
+*/
+
+// Note: that predefined function definitions are written in Allman indent style
+//		and out function definitions are written in K&R indent style
+//		reference: https://en.wikipedia.org/wiki/Indent_style
 
 #define F_CPU 14745600
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <math.h> //included to support power function
 #include "lcd.h"
 #include "glcd.h"	//User defined LCD library which contains the lcd routines
 #include "glcd.c"
+
+#include "glcd_big_font_msg.h"	// big ubuntu font stored as image
+#include "glcd_big_font_msg.c"
 
 #include <string.h>
 
@@ -35,34 +53,32 @@ volatile unsigned long int ShaftCountLeft = 0; //to keep track of left position 
 volatile unsigned long int ShaftCountRight = 0; //to keep track of right position encoder
 volatile unsigned int Degrees; //to accept angle in degrees for turning
 
-unsigned char data; //to store received data from UDR1
-unsigned char input_str[100] = ""; // stores the raw input string
-unsigned char D1[12] = ""; // to store D1 array
-unsigned char D2[8] = ""; // to store D2 array
+char data; //to store received data from UDR1
+char input_str[100] = ""; // stores the raw input string
 
 //Function to configure LCD port
 void lcd_port_config (void)
 {
- DDRC = DDRC | 0xF7; //all the LCD pin's direction set as output
- PORTC = PORTC & 0x80; // all the LCD pins are set to logic 0 except PORTC 7
+	DDRC = DDRC | 0xF7; //all the LCD pin's direction set as output
+	PORTC = PORTC & 0x80; // all the LCD pins are set to logic 0 except PORTC 7
 }
 
 //ADC pin configuration
 void adc_pin_config (void)
 {
- DDRF = 0x00; 
- PORTF = 0x00;
- DDRK = 0x00;
- PORTK = 0x00;
+	DDRF = 0x00;
+	PORTF = 0x00;
+	DDRK = 0x00;
+	PORTK = 0x00;
 }
 
 //Function to configure ports to enable robot's motion
 void motion_pin_config (void) 
 {
- DDRA = DDRA | 0x0F;
- PORTA = PORTA & 0xF0;
- DDRL = DDRL | 0x18;   //Setting PL3 and PL4 pins as output for PWM generation
- PORTL = PORTL | 0x18; //PL3 and PL4 pins are for velocity control using PWM.
+	DDRA = DDRA | 0x0F;
+	PORTA = PORTA & 0xF0;
+	DDRL = DDRL | 0x18;   //Setting PL3 and PL4 pins as output for PWM generation
+	PORTL = PORTL | 0x18; //PL3 and PL4 pins are for velocity control using PWM.
 }
 
 
@@ -111,34 +127,6 @@ void port_init()
 	buzzer_pin_config();
 	LED_pin_config();
 	interrupt_switch_config();
-}
-
-void left_led_on (void) {
-	unsigned char port_restore = 0;
-	port_restore = PING;
-	port_restore |= 0b00000001;
-	PORTG = port_restore;
-}
-
-void left_led_off (void) {
-	unsigned char port_restore = 0;
-	port_restore = PING;
-	port_restore &= 0b11111110;
-	PORTG = port_restore;
-}
-
-void right_led_on (void) {
-	unsigned char port_restore = 0;
-	port_restore = PING;
-	port_restore |= 0b00000010;
-	PORTG = port_restore;
-}
-
-void right_led_off (void) {
-	unsigned char port_restore = 0;
-	port_restore = PING;
-	port_restore &= 0b11111101;
-	PORTG = port_restore;
 }
 
 void left_position_encoder_interrupt_init (void) //Interrupt 4 enable
@@ -443,21 +431,11 @@ void uart2_init(void)
 	UCSR2B = 0x98;
 }
 
-int counter=0;
 SIGNAL(SIG_USART2_RECV) {		// ISR for receive complete interrupt
-	data = UDR2; 				//making copy of data from UDR2 in 'data' variable
-	UDR2 = data; 				//echo data back to PC
-
-	//if (counter < 12) strcat(D1, &data);
-	//else strcat(D2, &data);
-	strcat(input_str, &data);
-	GLCD_DisplayChar(data);
-
-	//lcd_wr_command(0x01);
-	//lcd_cursor(1, 1);
-	//lcd_string(data);
-	//lcd_wr_char(data);
-	counter++;
+	data = UDR2; 				// making copy of data from UDR2 in 'data' variable
+	UDR2 = data; 				// echo data back to PC
+	strcat(input_str, &data);	// concatenate each ascii character received to string input_str
+	//GLCD_DisplayChar(data);
 }
 
 void init_devices (void)
@@ -480,22 +458,10 @@ void init_devices (void)
 
 
 // ################################ declaring global variables start #######################################
-// mapping cell no as array index with row-column of grids
-/*int d1_position_map[12][2] = {
-{1, 1},	{1, 2},	{1, 3},	{1, 4},
-{2, 1},	{2, 2},	{2, 3},	{2, 4},
-{3, 1},	{3, 2},	{3, 3},	{3, 4}
-};
-int d2_position_map[24][2] = {
-{1, 1},	{1, 2},	{1, 3},	{1, 4},	{1, 5},	{1, 6},
-{2, 1},	{2, 2},	{2, 3},	{2, 4},	{2, 5},	{2, 6},
-{3, 1},	{3, 2},	{3, 3},	{3, 4},	{3, 5},	{3, 6},
-{4, 1},	{4, 2},	{4, 3},	{4, 4},	{4, 5},	{4, 6}
-};*/
 
 // mapping / setting cell co-ordinates in D1
-// 12 cells, 4 points in each cell, 2 index for row-column in each point
-// 4 points for each cell are sorted in this order: top-left, top-right, bottom-right, bottom-left
+//	12 cells, 4 points in each cell, 2 index for row-column in each point
+//	4 points for each cell are sorted in this order: top-left, top-right, bottom-right, bottom-left
 int d1_position_map[12][4][2] = {
 	{{0, 0}, {0, 1}, {1, 1}, {1, 0}}, {{0, 1}, {0, 2}, {1, 2}, {1, 1}}, {{0, 2}, {0, 3}, {1, 3}, {1, 2}}, {{0, 3}, {0, 4}, {1, 4}, {1, 3}},
 	{{1, 0}, {1, 1}, {2, 1}, {2, 0}}, {{1, 1}, {1, 2}, {2, 2}, {2, 1}}, {{1, 2}, {1, 3}, {2, 3}, {2, 2}}, {{1, 3}, {1, 4}, {2, 4}, {2, 3}},
@@ -503,8 +469,8 @@ int d1_position_map[12][4][2] = {
 };
 
 // mapping / setting cell co-ordinates in D2
-// 24 cells, 4 points in each cell, 2 index for row-column in each point
-// 4 points for each cell are sorted in this order: top-left, top-right, bottom-right, bottom-left
+//	24 cells, 4 points in each cell, 2 index for row-column in each point
+//	4 points for each cell are sorted in this order: top-left, top-right, bottom-right, bottom-left
 int d2_position_map[24][4][2] = {
 	{{0, 0}, {0, 1}, {1, 1}, {1, 0}}, {{0, 1}, {0, 2}, {1, 2}, {1, 1}}, {{0, 2}, {0, 3}, {1, 3}, {1, 2}}, {{0, 3}, {0, 4}, {1, 4}, {1, 3}}, {{0, 4}, {0, 5}, {1, 5}, {1, 4}}, {{0, 5}, {0, 6}, {1, 6}, {1, 5}},
 	{{1, 0}, {1, 1}, {2, 1}, {2, 0}}, {{1, 1}, {1, 2}, {2, 2}, {2, 1}}, {{1, 2}, {1, 3}, {2, 3}, {2, 2}}, {{1, 3}, {1, 4}, {2, 4}, {2, 3}}, {{1, 4}, {1, 5}, {2, 5}, {2, 4}}, {{1, 5}, {1, 6}, {2, 6}, {2, 5}},
@@ -512,16 +478,16 @@ int d2_position_map[24][4][2] = {
 	{{3, 0}, {3, 1}, {4, 1}, {4, 0}}, {{3, 1}, {3, 2}, {4, 2}, {4, 1}}, {{3, 2}, {3, 3}, {4, 3}, {4, 2}}, {{3, 3}, {3, 4}, {4, 4}, {4, 3}}, {{3, 4}, {3, 5}, {4, 5}, {4, 4}}, {{3, 5}, {3, 6}, {4, 6}, {4, 5}}
 };
 
-unsigned char current_velocity = 150;	// default velocity 100
-char current_direction = 'N';			// E/W/N/S
-char pickup_direction = '\0';			// values can be L or R i.e. left or right respectively
-int current_grid = -1;					// 1, 2 i.e. D1, D2, initially invalid
-int current_cell_no = -1;				// initially a invalid one
-int current_coordinate[2] = {-1, -1};	// co-ordinate of the cell, initially invalid
-int BNW_Thresh = 40;					// black and white thresh default 16
+unsigned char current_velocity = 127;	// value can be 0-255, default velocity 127
+char current_direction = 'N';			// value can be E/W/N/S i.e. east, west, north or south respectively, Default N
+char pickup_direction = '\0';			// value can be L or R i.e. left or right respectively
+int current_grid = -1;					// value can be 1 or 2 i.e. D1 or D2, initially -1 as invalid
+int current_cell_no = -1;				// value can be 0 to 11 for D1, 0-23 for D2, initially -1 as invalid
+int current_coordinate[2] = {-1, -1};	// co-ordinate of the cell i.e. row-column number from position map, initially -1, -1 as invalid
+int BNW_Thresh = 40;					// black and white threshold value, default 28 [formula: ((W+B)/2)-(B/3)]
 
-float left_velocity_float, right_velocity_float;
-unsigned char left_velocity, right_velocity;
+float left_velocity_float, right_velocity_float;	// stores velocity of left and right wheel respectively as float
+unsigned char left_velocity, right_velocity;		// stores velocity of left and right wheel respectively as unsigned char
 // ################################ declaring global variables end #########################################
 
 
@@ -545,7 +511,7 @@ void print_str_to_pc (char str[]) {
  */
 void print_int_to_pc (int num) {
 	int i;
-	unsigned char str[10];
+	char str[10];
 	snprintf(str, 10, "%d", num);
 	
 	UDR2 = 0x0D;
@@ -566,6 +532,8 @@ void debug (int id, int pause) {
 	lcd_cursor(2, 7);
 	lcd_wr_char(current_direction);
 	lcd_print(1, 14, id, 2);
+	//GLCD_Clear();
+	//GLCD_Printf("\n\n%2d", id);
 	
 	if (pause == 1) {
 		// make the robot busy until detecting boot switch i.e. interrupt is pressed
@@ -578,11 +546,78 @@ void debug (int id, int pause) {
 }
 // helper/debugger functions end ###########################################################################
 
-/** It calculates the cost of traveling between two points
- *
- * @param current_point is an int array.
- * @param target_point is an int array.
- * @returns total_cost which is an int.
+/*
+ * Function Name:	left_led_on
+ * Input :			
+ *					
+ * Output :			It turns on the left RGB LED
+ * Logic:			PORT G0 is configured for left RGB LED, writing logic high to PG0
+ *					
+ * Example Call:	left_led_on()
+ */
+void left_led_on (void) {
+	unsigned char port_restore = 0;
+	port_restore = PING;
+	port_restore |= 0b00000001;
+	PORTG = port_restore;
+}
+
+/*
+ * Function Name:	left_led_off
+ * Input :			
+ *					
+ * Output :			It turns of the left RGB LED
+ * Logic:			PORT G0 is configured for left RGB LED, writing logic low to PG0
+ *					
+ * Example Call:	left_led_on()
+ */
+void left_led_off (void) {
+	unsigned char port_restore = 0;
+	port_restore = PING;
+	port_restore &= 0b11111110;
+	PORTG = port_restore;
+}
+
+/*
+ * Function Name:	right_led_on
+ * Input :			
+ *					
+ * Output :			It turns on the right RGB LED
+ * Logic:			PORT G1 is configured for right RGB LED, writing logic high to PG1
+ *					
+ * Example Call:	right_led_on()
+ */
+void right_led_on (void) {
+	unsigned char port_restore = 0;
+	port_restore = PING;
+	port_restore |= 0b00000010;
+	PORTG = port_restore;
+}
+
+/*
+ * Function Name:	right_led_off
+ * Input :			
+ *					
+ * Output :			It turns on the right RGB LED
+ * Logic:			PORT G1 is configured for right RGB LED, writing logic low to PG1
+ *					
+ * Example Call:	right_led_off()
+ */
+void right_led_off (void) {
+	unsigned char port_restore = 0;
+	port_restore = PING;
+	port_restore &= 0b11111101;
+	PORTG = port_restore;
+}
+
+/*
+ * Function Name:	get_point_cost
+ * Input :			current_point - int array containing row & column number of current coordinate point,
+ *					target_point - int array containing row & column number of target coordinate point
+ * Output :			total_cost - int which is the calculated cost between current and target coordinate point
+ * Logic:			It calculates the cost of traveling between two points i.e. calculating row difference and  
+ *					column difference and make sum of them
+ * Example Call:	get_point_cost(current_point, target_point)
  */
 int get_point_cost (int current_point[2], int target_point[2]) {
 	int total_cost;	
@@ -597,8 +632,19 @@ int get_point_cost (int current_point[2], int target_point[2]) {
  * @param target_cell is an int **.
  * @returns nearest_point which is an int *.
  */
+
+/*
+ * Function Name:	get_nearest_point
+ * Input :			current_point - int array containing row & column number of current coordinate point,
+ *					target_cell - 2D int array contains target cell's 4 points with coordinate based on row & column
+ * Output :			nearest_point - int array containing row & column number of nearest coordinate point among 4 points of target_cell
+ * Logic:			We are calculating traveling cost i.e. distance between current point and each of target cell's 4 points (top-left,
+ *					top-right, bottom-right, bottom-left) and returning that point with lowest cost
+ * Example Call:	get_nearest_point(current_coordinate, d1_position_map[target_cell_no])
+ */
 int * get_nearest_point (int current_point[2], int target_cell[4][2]) {
-	int nearest_point[2];
+	int * nearest_point = malloc(2 * sizeof(int));
+	
 	int i, current_cost, lowest_cost = 100;
 	
 	for (i=0; i<4; i++) {
@@ -619,8 +665,39 @@ int * get_nearest_point (int current_point[2], int target_cell[4][2]) {
  * @param Center_white_line is an unsigned char.
  * @param Right_white_line is an unsigned char.
  */
-void follow_black_line (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line, char direction) {
-	flag=0;	
+
+/*
+ * Function Name:	read_wl_sensor_values
+ * Input :			
+ *					
+ * Output :			It updates global variables Left_white_line, Center_white_line, Right_white_line
+ * Logic:			It reads all 3 white line sensor values by using function ADC_Conversion()
+ *					
+ * Example Call:	read_wl_sensor_values()
+ */
+void read_wl_sensor_values () {
+	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
+	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+}
+
+/*
+ * Function Name:	follow_black_line
+ * Input :			Left_white_line, Center_white_line, Right_white_line
+ *					
+ * Output :			It follows a 1cm thick black line on white surface
+ * Logic:			To follow a 1cm black line, we can linearly forward the robot if all three white line sensors
+ *					are on white surface or the center white line sensor is on the black surface. We decrease velocity of the
+ *					right wheel and increase velocity of the left wheel if right white line sensor is on the black surface and
+ *					other twos are on the white surface. Similarly we decrease velocity of the left wheel and increase velocity
+ *					of the right wheel if left white line sensor is on the black surface and other twos are on the white surface.
+ *					This way the robot follows a 1cm thick black line.
+ *					
+ * Example Call:	follow_black_line('F')
+ */
+void follow_black_line (char direction) {
+//void follow_black_line (unsigned char Left_white_line, unsigned char Center_white_line, unsigned char Right_white_line, char direction) {
+	flag = 0;
 		
 	if (((Left_white_line <= BNW_Thresh) && (Center_white_line <= BNW_Thresh) && (Right_white_line <= BNW_Thresh)) || (Center_white_line > BNW_Thresh)) {
 		flag=1;
@@ -634,10 +711,6 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 		if (direction == 'F') forward();
 		else back();
 		velocity(left_velocity+30, right_velocity-50);
-		//velocity(left_velocity+50, right_velocity-50);
-		//velocity(left_velocity, right_velocity*0.8);
-		//if (direction == 'F') velocity(left_velocity+50, right_velocity-50);
-		//else velocity(left_velocity-50, right_velocity+50);
 	}
 
 	if((Left_white_line > BNW_Thresh) && (Center_white_line <= BNW_Thresh) && (Right_white_line <= BNW_Thresh) && (flag == 0)) {
@@ -645,12 +718,12 @@ void follow_black_line (unsigned char Left_white_line, unsigned char Center_whit
 		if (direction == 'F') forward();
 		else back();
 		velocity(left_velocity-50, right_velocity+30);
-		//velocity(left_velocity-50, right_velocity+50);
-		//velocity(left_velocity*0.8, right_velocity);
-		//if (direction == 'F') velocity(left_velocity-50, right_velocity+50);
-		//else velocity(left_velocity+50, right_velocity-50);
 	}
+	
+	//GLCD_Clear();
+	//GLCD_Printf("%3d %3d %3d ", Left_white_line, Center_white_line, Right_white_line);
 }
+
 
 /** It follows a black line up to a fixed distance
  *
@@ -667,14 +740,13 @@ void follow_black_line_mm (unsigned int DistanceInMM, char direction) {
 	ShaftCountRight = 0;
 	ShaftCountLeft = 0;
 	while(1) {
-		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+		read_wl_sensor_values();
 		
 		if(ShaftCountRight > ReqdShaftCountInt || ShaftCountLeft > ReqdShaftCountInt) {
 			break;
 		} else {
-			follow_black_line(Left_white_line, Center_white_line, Right_white_line, direction);
+			//follow_black_line(Left_white_line, Center_white_line, Right_white_line, direction);
+			follow_black_line(direction);
 		}
 	}
 	
@@ -687,83 +759,30 @@ void follow_black_line_mm (unsigned int DistanceInMM, char direction) {
  */
 //void turn_robot (char direction, int digit_count) {
 void turn_robot (char direction) {
-	Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-	int digit_count = 1;
-	int digit_detected = 0;
-	int i;
-	
-	// adjust the center white line sensor to the middle of a line
-	/*if (Center_white_line <= 16) {
-		while (Right_white_line <= 16 && Center_white_line <= 16) {
-			left_degrees(5);
-			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-			Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-		}
-		
-		if (Right_white_line > 16) {
-			while (Center_white_line <= 16) {
-				right_degrees(5);
-				Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-			}			
-		}
-	}*/
+	read_wl_sensor_values();
+	velocity(current_velocity+15, current_velocity+15);
 	
 	if (direction == 'L') {
-		/*// turn left 45 degree and check if there is a number in the cell
-		for (i=0; i<15; i++) { // 5x9=45 degrees
-			Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-			Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-			
-			left_degrees(5);
-			if (Left_white_line > 16 || Center_white_line > 16 || Right_white_line > 16) {
-				flag = 1;
-			}
-		}
-		//debug(1, 1);
-		
-		if (flag == 1) {			
-			left_degrees(35);
-			//debug(2, 1);
-		}*/
-		
 		left_degrees(75);
 		//debug(1, 1);
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		while (Center_white_line <= 16) {
-			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		read_wl_sensor_values();
+		while (Center_white_line <= BNW_Thresh) {
+			read_wl_sensor_values();
 			left_degrees(5);
+			//_delay_ms(50);
 		}
-	} else {
-		/*// turn right 45 degree and check if there is a number in the cell
-		for (i=0; i<15; i++) { // 5x9=45 degrees
-			Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-			Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
-			
-			right_degrees(5);
-			if (Left_white_line > 16 || Center_white_line > 16 || Right_white_line > 16) {
-				flag = 1;
-			}
-		}
-		//debug(3, 1);
-		
-		if (flag == 1) {			
-			right_degrees(35);
-			//debug(4, 1);
-		}*/
-		
+	} else {		
 		right_degrees(75);
 		//debug(2, 1);
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		while (Center_white_line <= 16) {
-			Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
+		read_wl_sensor_values();
+		while (Center_white_line <= BNW_Thresh) {
+			read_wl_sensor_values();
 			right_degrees(5);
+			//_delay_ms(50);
 		}
 	}
-	_delay_ms(500);	
+	velocity(current_velocity-15 ,current_velocity-15);
+	_delay_ms(500);
 }
 
 /** It changes the direction of the robot i.e. east/west/north/south.
@@ -878,17 +897,18 @@ void move_one_cell () {
 
 	// forward until detecting next 3x3 black box
 	//while (!((Left_white_line > 20) && (Center_white_line > 20) && (Right_white_line > 20))) { // all on black
-	while (!(((Left_white_line > 16) && (Center_white_line > 16)) || ((Center_white_line > 16) && (Right_white_line > 16)) // 1-2 or 3-2 on white
-			|| ((Left_white_line > 16) && (Center_white_line > 16) && (Right_white_line > 16)))) { // center on black
-		Left_white_line = ADC_Conversion(3);	//Getting data of Left WL Sensor
-		Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
-		Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
+	while (!(((Left_white_line > BNW_Thresh) && (Center_white_line > BNW_Thresh)) || ((Center_white_line > BNW_Thresh) && (Right_white_line > BNW_Thresh)) // 1-2 or 3-2 on white
+			|| ((Left_white_line > BNW_Thresh) && (Center_white_line > BNW_Thresh) && (Right_white_line > BNW_Thresh)))) { // center on black
+		read_wl_sensor_values();
 		
-		print_sensor(1,1,3);	//Prints value of White Line Sensor1
+		/*print_sensor(1,1,3);	//Prints value of White Line Sensor1
 		print_sensor(1,5,2);	//Prints Value of White Line Sensor2
-		print_sensor(1,9,1);	//Prints Value of White Line Sensor3
+		print_sensor(1,9,1);	//Prints Value of White Line Sensor3*/
+		//GLCD_Clear();
+		//GLCD_Printf("%3d %3d %3d ", Left_white_line, Center_white_line, Right_white_line);
 		
-		follow_black_line(Left_white_line, Center_white_line, Right_white_line, 'F');
+		//follow_black_line(Left_white_line, Center_white_line, Right_white_line, 'F');
+		follow_black_line('F');
 	}
 		
 	//buzzer_on();
@@ -900,7 +920,7 @@ void move_one_cell () {
 	//_delay_ms(500);
 	
 	// adjust 11 cm forward
-	forward_mm(60);
+	forward_mm(50);
 	//follow_black_line_mm(Left_white_line, Center_white_line, Right_white_line, 50, 'F'); // old robot 110
 }
 
@@ -915,7 +935,7 @@ void match_column (int target_coordinate[]) {
 		//_delay_ms(500);
 		//current_cell_no--; // 1, 2, 3; 4, 5, 6; ...
 		current_coordinate[1] = current_coordinate[1] - 1;
-		debug(1, 0);
+		//debug(1, 0);
 		// move one cell and update robot's status			
 	}
 		
@@ -925,7 +945,7 @@ void match_column (int target_coordinate[]) {
 		//_delay_ms(500);
 		//current_cell_no++; // 1, 2, 3; 4, 5, 6; ...
 		current_coordinate[1] = current_coordinate[1] + 1;
-		debug(2, 0);
+		//debug(2, 0);
 	}
 }
 
@@ -940,7 +960,7 @@ void match_row (int target_coordinate[]) {
 		//_delay_ms(500);
 		//current_cell_no -= 4; // 8, 4, 0; 9, 5, 1; ...
 		current_coordinate[0] = current_coordinate[0] - 1;
-		debug(3, 0);
+		//debug(3, 0);
 		// move one cell and update robot's status
 	}
 	
@@ -950,7 +970,7 @@ void match_row (int target_coordinate[]) {
 		//_delay_ms(500);
 		//current_cell_no += 4; // 8, 4, 0; 9, 5, 1; ...
 		current_coordinate[0] = current_coordinate[0] + 1;
-		debug(4, 0);
+		//debug(4, 0);
 		// move one cell and update robot's status
 	}
 }
@@ -1060,7 +1080,7 @@ void pickup (int num, int skip_over) {
 	Center_white_line = ADC_Conversion(2);	//Getting data of Center WL Sensor
 	Right_white_line = ADC_Conversion(1);	//Getting data of Right WL Sensor
 	//forward_mm(30);
-	follow_black_line_mm(30, 'F');
+	follow_black_line_mm(50, 'F');
 	
 	get_pickup_direction();
 	//GLCD_Printf("#direction: %c", pickup_direction);
@@ -1079,7 +1099,7 @@ void pickup (int num, int skip_over) {
 		move_one_cell();
 	} else {
 		//back_mm(30);
-		follow_black_line_mm(30, 'B');
+		follow_black_line_mm(25, 'B');
 	}
 }
 
@@ -1143,7 +1163,7 @@ void deposit (int completed, int isEnd) {
 	}
 	
 	//forward_mm(30);
-	follow_black_line_mm(30, 'F');	
+	follow_black_line_mm(50, 'F');	
 	
 	//turn off led
 	if (pickup_direction == 'L') left_led_off();
@@ -1168,7 +1188,7 @@ void deposit (int completed, int isEnd) {
 	
 	if (isEnd == 0) { // the robot has not finished the task yet
 		//back_mm(30);
-		follow_black_line_mm(30, 'B');
+		follow_black_line_mm(25, 'B');
 	}
 }
 
@@ -1194,17 +1214,17 @@ int main() {
 	
 	print_str_to_pc(input_str);
 	
-    unsigned char * token;
+    char * token;
 	token = strtok(input_str, ",");
 	i = 0;
 	while (token != '\0') {
-		path_points[i++] = atoi(token);
+		path_points[i++] = atoi((char *)token);
 		token = strtok('\0', ",");
 	}
 	/*************************** converting input string to int array end ******************************/
 	
 	// set velocity
-	current_velocity = 127;
+	current_velocity = 135; // 127 on full charge
 	
 	// synchronize wheels
 	// left wheel is physically 7.18% slower than the right wheel, so increase velocity
@@ -1310,7 +1330,7 @@ int main() {
 				
 				// it should be deleted before video submission/final
 				if (path_points[i+2] != -1) {
-					GLCD_Printf("Gonna pick %d from cell#%d", path_points[i+3], path_points[i+2]);
+					//GLCD_Printf("Gonna pick %d from cell#%d", path_points[i+3], path_points[i+2]);
 				} else {
 					// continuous buzzer on finished the task
 					buzzer_on();
