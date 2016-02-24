@@ -1,6 +1,6 @@
 /*
-* Team Id :			eYRCPlus-PS1#2678
-* Author List :		Avick Dutta (team leader), Arpan Das, Subhendu Hazra, Asesh Basu
+* Team Id:			eYRCPlus-PS1#2678
+* Author List:		Avick Dutta (team leader), Arpan Das, Subhendu Hazra, Asesh Basu
 * Filename:			Puzzle_Solver.c
 * Theme:			Puzzle Solver Robot (GLCD) - eYRCPlus
 * Functions:		left_led_on, left_led_off, right_led_on, right_led_off,
@@ -476,8 +476,8 @@ unsigned char left_velocity, right_velocity;		// stores velocity of left and rig
 
 /*
  * Function Name:	left_led_on
- * Input :			None	
- * Output :			It turns on the left RGB LED
+ * Input:			None	
+ * Output:			It turns on the left RGB LED
  * Logic:			PORT G0 is configured for left RGB LED, writing logic high to PG0
  * Example Call:	left_led_on()
  */
@@ -490,8 +490,8 @@ void left_led_on (void) {
 
 /*
  * Function Name:	left_led_off
- * Input :			None		
- * Output :			It turns of the left RGB LED
+ * Input:			None		
+ * Output:			It turns of the left RGB LED
  * Logic:			PORT G0 is configured for left RGB LED, writing logic low to PG0		
  * Example Call:	left_led_on()
  */
@@ -504,8 +504,8 @@ void left_led_off (void) {
 
 /*
  * Function Name:	right_led_on
- * Input :			None	
- * Output :			It turns on the right RGB LED
+ * Input:			None	
+ * Output:			It turns on the right RGB LED
  * Logic:			PORT G1 is configured for right RGB LED, writing logic high to PG1			
  * Example Call:	right_led_on()
  */
@@ -518,8 +518,8 @@ void right_led_on (void) {
 
 /*
  * Function Name:	right_led_off
- * Input :			None		
- * Output :			It turns on the right RGB LED
+ * Input:			None		
+ * Output:			It turns on the right RGB LED
  * Logic:			PORT G1 is configured for right RGB LED, writing logic low to PG1			
  * Example Call:	right_led_off()
  */
@@ -532,9 +532,9 @@ void right_led_off (void) {
 
 /*
  * Function Name:	get_point_cost
- * Input :			current_point - int array containing row & column number of current coordinate point,
+ * Input:			current_point - int array containing row & column number of current coordinate point,
  *					target_point - int array containing row & column number of target coordinate point
- * Output :			total_cost - int which is the calculated cost between current and target coordinate point
+ * Output:			total_cost - int which is the calculated cost between current and target coordinate point
  * Logic:			It calculates the cost of traveling between two points i.e. calculating row difference and  
  *					column difference and make sum of them
  * Example Call:	get_point_cost(current_point, target_point)
@@ -549,9 +549,9 @@ int get_point_cost (int current_point[2], int target_point[2]) {
 
 /*
  * Function Name:	get_nearest_point
- * Input :			current_point - int array containing row & column number of current coordinate point,
+ * Input:			current_point - int array containing row & column number of current coordinate point,
  *					target_cell - 2D int array contains target cell's 4 points with coordinate based on row & column
- * Output :			nearest_point - int array containing row & column number of nearest coordinate point among 4 points of target_cell
+ * Output:			nearest_point - int array containing row & column number of nearest coordinate point among 4 points of target_cell
  * Logic:			We are calculating traveling cost i.e. distance between current point and each of target cell's 4 points (top-left,
  *					top-right, bottom-right, bottom-left) and returning that point with lowest cost
  * Example Call:	get_nearest_point(current_coordinate, d1_position_map[target_cell_no])
@@ -577,8 +577,8 @@ int * get_nearest_point (int current_point[2], int target_cell[4][2]) {
 
 /*
  * Function Name:	read_wl_sensor_values
- * Input :			Global variables Left_white_line, Center_white_line, Right_white_line
- * Output :			It updates global variables Left_white_line, Center_white_line, Right_white_line
+ * Input:			Global variables Left_white_line, Center_white_line, Right_white_line
+ * Output:			It updates global variables Left_white_line, Center_white_line, Right_white_line
  * Logic:			It reads all 3 white line sensor values by using function ADC_Conversion()
  * Example Call:	read_wl_sensor_values()
  */
@@ -590,9 +590,9 @@ void read_wl_sensor_values () {
 
 /*
  * Function Name:	follow_black_line
- * Input :			Left_white_line, Center_white_line, Right_white_line are global variables,
+ * Input:			Left_white_line, Center_white_line, Right_white_line are global variables,
  *					direction can be 'F' or 'B' as forward or backward respectively
- * Output :			It follows a 1cm thick black line on white surface
+ * Output:			It follows a 1cm thick black line on white surface
  * Logic:			To follow a 1cm black line, we can linearly forward the robot if all three white line sensors
  *					are on white surface or the center white line sensor is on the black surface. We decrease velocity of the
  *					right wheel and increase velocity of the left wheel if right white line sensor is on the black surface and
@@ -640,9 +640,9 @@ void follow_black_line (char direction) {
 
 /*
  * Function Name:	follow_black_line_mm
- * Input :			DistanceInMM - is a unsigned integer, 
+ * Input:			DistanceInMM - is a unsigned integer, 
  *					direction - is a char variable
- * Output :			It follows a 1cm thick black line up to a specific distance
+ * Output:			It follows a 1cm thick black line up to a specific distance
  * Logic:			It calculates required shaft count to travel up to DistanceInMM
  *					and follows the black line. ShaftCountRight and ShaftCountLeft are initially
  *					set to 0. While moving the robot, we increase them and When the ShaftCountRight
@@ -675,8 +675,8 @@ void follow_black_line_mm (unsigned int DistanceInMM, char direction) {
 
 /*
  * Function Name:	turn_robot
- * Input :			direction is a char variable which can be 'L' or 'R' as left or right respectively
- * Output :			This function rotates the robot perfect 90 degrees left or right
+ * Input:			direction is a char variable which can be 'L' or 'R' as left or right respectively
+ * Output:			This function rotates the robot perfect 90 degrees left or right
  * Logic:			At first it reads all white line sensor values and increase velocity to current velocity + 15
  *					left_degrees(90)3is static and does not always as per hardware and physical limitations.
  *					So, we have to rotate the robot dynamically. We rotate the robot by 5 degrees until
@@ -715,9 +715,9 @@ void turn_robot (char direction) {
 
 /*
  * Function Name:	change_direction
- * Input :			desired_direction is a unsigned char variable which can be 'E'/'W'/'N'/'S' as
+ * Input:			desired_direction is a unsigned char variable which can be 'E'/'W'/'N'/'S' as
  *					ease, west, north or south respectively
- * Output :			It changes the robots direction to ease, west, north or south and updates its current 
+ * Output:			It changes the robots direction to ease, west, north or south and updates its current 
  *					direction which is stored in global variable current_direction
  * Logic:			if current direction is north and desired direction is west then
  *						we turn the robot left by 90 degrees using turn_robot('L') and updates current direction to west
@@ -827,8 +827,8 @@ void change_direction (unsigned char desired_direction) {
 
 /*
  * Function Name:	move_one_cell
- * Input :			Reads global variables Left_white_line, Center_white_line, Right_white_line, BNW_Thresh		
- * Output :			It moved the robot 1 cell in forward direction i.e. robot forwards until get a 3x3 black square
+ * Input:			Reads global variables Left_white_line, Center_white_line, Right_white_line, BNW_Thresh		
+ * Output:			It moved the robot 1 cell in forward direction i.e. robot forwards until get a 3x3 black square
  * Logic:			If right and center white line sensors are on black surface and left white line sensor is on white
  *						surface, we also detect it as a 3x3cm black square.
  *					If left and center white line sensors are on the black surface and right white line sensor is on
@@ -857,8 +857,8 @@ void move_one_cell () {
 
 /*
  * Function Name:	match_column
- * Input :			target_coordinate is a int array which holds a co-ordinate i.e. row, column number
- * Output :			It updates current co-ordinate's column number i.e. the global variable current_coordinate[1]
+ * Input:			target_coordinate is a int array which holds a co-ordinate i.e. row, column number
+ * Output:			It updates current co-ordinate's column number i.e. the global variable current_coordinate[1]
  * Logic:			Until current co-ordinate's column > target co-ordinates's column, we repeat the process indented below
  *						change direction to west by using change_direction('W') and then move the robot by one cell 
  *						forward by using move_one_cell(). After that we update current co-ordinate's column number by decreasing 1
@@ -885,8 +885,8 @@ void match_column (int target_coordinate[]) {
 
 /*
  * Function Name:	match_row
- * Input :			target_coordinate is a int array which holds a co-ordinate i.e. row, column number
- * Output :			It updates current co-ordinate's row number i.e. the global variable current_coordinate[0]
+ * Input:			target_coordinate is a int array which holds a co-ordinate i.e. row, column number
+ * Output:			It updates current co-ordinate's row number i.e. the global variable current_coordinate[0]
  * Logic:			Until current co-ordinate's row > target co-ordinates's row, we repeat the process indented below
  *						change direction to north by using change_direction('N') and then move the robot by one cell 
  *						forward by using move_one_cell(). After that we update current co-ordinate's column number by decreasing 1
@@ -914,8 +914,8 @@ void match_row (int target_coordinate[]) {
 
 /*
  * Function Name:	go_to_coordinate
- * Input :			target_coordinate is a int array which holds a co-ordinate i.e. row, column number
- * Output :			It moves the robot to a specific co-ordinate by using match_column and match_row functions
+ * Input:			target_coordinate is a int array which holds a co-ordinate i.e. row, column number
+ * Output:			It moves the robot to a specific co-ordinate by using match_column and match_row functions
  * Logic:			If the robot is currently in D1 then
  *						If current direction is east or west then
  *							move the robot and match robot's and target co-ordinate's column
@@ -956,9 +956,9 @@ void go_to_coordinate (int target_coordinate[]) {
 
 /*
  * Function Name:	go_to_cell_no
- * Input :			target_division - is an int variable which can be 1 or 2 as D1 or D2 respectively,
+ * Input:			target_division - is an int variable which can be 1 or 2 as D1 or D2 respectively,
  *					target_cell_no - is an int variable which can be 0-11 in D1 and 0-23 in D2
- * Output :			It moves the robot to nearest among 4 points (top-left, top-right, bottom-right, bottom-left)
+ * Output:			It moves the robot to nearest among 4 points (top-left, top-right, bottom-right, bottom-left)
  *					of a given cell number with target division
  * Logic:			It creates an integer pointer to store a co-ordinate. Then if the target division is 1 i.e. D1
  *					then copy returned data from get_nearest_point(current_coordinate, d1_position_map[target_cell_no])
@@ -986,8 +986,8 @@ void go_to_cell_no (int target_division, int target_cell_no) {
 
 /*
  * Function Name:	get_pickup_direction
- * Input :			Global variable current_direction.
- * Output :			It updates the global variable pickup_direction which can be 'L' or 'R' as left or right respectively
+ * Input:			Global variable current_direction.
+ * Output:			It updates the global variable pickup_direction which can be 'L' or 'R' as left or right respectively
  * Logic:			Integer left and right is initialized with 0
  *					if current direction of the robot is north then
  *						i = 0
@@ -1050,23 +1050,21 @@ void get_pickup_direction () {
 
 /*
  * Function Name:	pickup
- * Input :			num - is an integer number which can be 0-9 present in D1,
+ * Input:			num - is an integer number which can be 0-9 present in D1,
  *					skip_over - is an integer number which can be 0 or 1. It decides move forward of backward after pickup.
- * Output :			It picks up a number from D1 by forwarding the robot half of the cell and then pickup by 
+ * Output:			It picks up a number from D1 by forwarding the robot half of the cell and then pickup by 
  *					glowing left or right RGB LEDs and showing the number in the GLCD and after pickup the 
  *					robot forward and skip over the cell or backwards and returns to previous node as per travel cost
- * Logic:			At first we read all white line sensor values
- *					Then we forward the robot by 50 mm to get to the center of the cell before pickup a number
+ * Logic:			Then we forward the robot by 50 mm to get to the center of the cell before pickup a number
  *					the we calculate pickup direction.
  *					If pickup direction is left, then turn on left RGB LED
- *					else then turn on right RGB LED
+ *					Else, turn on right RGB LED
  *					After that clear GLCD screen and display the number we have picked up and delay for 500 ms
  *					Then, if skip_over is equals to 1 then call move_one_cell()
  *					else follow black line forward for 25 mm by follow_black_line_mm(25, 'B')
  * Example Call:	pickup(9, 1)
  */
 void pickup (int num, int skip_over) {
-	read_wl_sensor_values(); //may be not needed
 	follow_black_line_mm(50, 'F');
 	
 	get_pickup_direction();
@@ -1076,7 +1074,7 @@ void pickup (int num, int skip_over) {
 	else right_led_on();
 	
 	GLCD_Clear();
-	GLCD_DisplayBitmap(num); // show the num in big font
+	GLCD_DisplayBitmap(num); // show the num in big ubuntu font
 	
 	_delay_ms(500);
 	
@@ -1091,13 +1089,12 @@ void pickup (int num, int skip_over) {
 
 /*
  * Function Name:	deposit
- * Input :			completed - is an integer variable which can be 0 or 1. It determines if a number in D2 is completed or not,
+ * Input:			completed - is an integer variable which can be 0 or 1. It determines if a number in D2 is completed or not,
  *					isEnd - is an integer variable which can be 0 or 1. It determines if robot has ended the whole task or not.
- * Output :			It deposits the number that picked from D1 to a cell in D2 by maintaining pickup and deposit direction equal.
+ * Output:			It deposits the number that picked from D1 to a cell in D2 by maintaining pickup and deposit direction equal.
  *					While depositing a number, the robot turns the RGB LED off, shows a deposit message on GLCD and a buzzes for
  *					for 1000ms if a number in D2 is completed, and continuous buzzer if whole task is completed.
- * Logic:			Read the white line sensor values.
- *					If current_coordinate is on top left of the cell then
+ * Logic:			If current_coordinate is on top left of the cell then
  *						If pickup direction is left then change robot's direction to south
  *						else change robot's direction to east
  *					If current_coordinate is on top right of the cell then
@@ -1117,11 +1114,9 @@ void pickup (int num, int skip_over) {
  *					else delay for 1000 ms
  *					After all these steps, clear the GLCD
  *					If isEnd is equal to 0 then follow black line in backward direction for 25 mm
- * Example Call:	
+ * Example Call:	deposit(1, 0)
  */
-void deposit (int completed, int isEnd) {
-	read_wl_sensor_values(); // maybe not needed
-	
+void deposit (int completed, int isEnd) {	
 	if ((current_coordinate[0] == d2_position_map[current_cell_no][0][0]) && // current_coordinate is on top left of the cell
 	(current_coordinate[1] == d2_position_map[current_cell_no][0][1])) {
 		if (pickup_direction == 'L') change_direction('S');
@@ -1172,7 +1167,7 @@ void deposit (int completed, int isEnd) {
 //Main Function start ######################################################################################
 /*
  * Function Name:	main
- * Input:			input_str -- is a string which is a global variable. It contains comma separated numbers.
+ * Input:			input_str - is a string which is a global variable. It contains comma separated numbers.
  * Output:			int to inform the caller that the program exited correctly or incorrectly (C code standard)
  * Logic:			At first, we initialize devices. Then we make the robot busy until pressing interrupt key.
  *					If interrupt key is pressed then initialize integer array path_points -1 set to all elements.
@@ -1283,8 +1278,8 @@ int main() {
 					if (current_direction == 'E' || (current_direction == 'N' && current_coordinate[0] == 3)) {
 						pickup(path_points[i+1], 1);
 						
-						if (current_direction == 'N') current_coordinate[0]--;
-						if (current_direction == 'E') current_coordinate[1]++;
+						if (current_direction == 'N') current_coordinate[0]--; // current row = current row - 1
+						if (current_direction == 'E') current_coordinate[1]++; // current column = current column + 1
 					} else {
 						pickup(path_points[i+1], 0);
 					}		
@@ -1341,11 +1336,10 @@ int main() {
 				
 				// it should be deleted before video submission/final
 				if (path_points[i+2] == -1) {
-					// continuous buzzer on finished the task
+					// continuous buzzer on when finished the task
 					buzzer_on();
 					while(1);
 				}
-				
 			}
 			
 			j++;

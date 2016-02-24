@@ -1,12 +1,12 @@
 '''
 * Team Id: 			eYRCPlus-PS1#2678
 * Author List: 		Avick Dutta, Arpan Das, Subhendu Hazra, Asesh Basu
-* Filename: 		task5_code.py
+* Filename: 		task6_code.py
 * Theme: 			Puzzle Solver Robot (GLCD) - eYRCPlus
 * Functions: 		sortContoursByArea, sortContoursByPosition, cropDigits, digitCount, detectDigit, imgToNumber,
 *					cropBiggestContourAsImage, drawBorderAroundDigits, play, matcher, generate_output, substract_list,
 *					get_result_set, puzzle, generate_traversal_path
-* Global Variables:	<List of global variables defined in this file, none if no global variables>
+* Global Variables:	None
 '''
 
 import numpy as np
@@ -782,7 +782,7 @@ def generate_traversal_path (D1, D2_1D, results):
 '''
 if __name__ == "__main__":
 	img = cv2.imread('Bonus/Puzzle Solver 1.jpg')
-	com_port = 4 # COM PORT
+	com_port = 5 # COM PORT
 	
 	D1, D2 = play(img)
 	
