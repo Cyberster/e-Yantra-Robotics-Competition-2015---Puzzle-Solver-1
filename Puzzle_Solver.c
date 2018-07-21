@@ -677,7 +677,7 @@ void follow_black_line_mm (unsigned int DistanceInMM, char direction) {
  * Function Name:	turn_robot
  * Input:			direction is a char variable which can be 'L' or 'R' as left or right respectively
  * Output:			This function rotates the robot perfect 90 degrees left or right
- * Logic:			At first it reads all white line sensor values and increase velocity to current velocity + 15
+ * Logic:			At first it reads all white line sensor values and increase velocity to current velocity + 10
  *					left_degrees(90)3is static and does not always as per hardware and physical limitations.
  *					So, we have to rotate the robot dynamically. We rotate the robot by 5 degrees until
  *					the center white line sensor detects a black line. But to do that we have to cross/overcome 
