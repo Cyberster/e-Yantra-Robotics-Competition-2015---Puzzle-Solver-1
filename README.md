@@ -20,3 +20,5 @@
 	- OpenCV 2.4.9 x86
 	- Pyserial 1.4.2 x86
 	- Atmel Studio 6
+
+* Theme video: https://www.youtube.com/watch?v=didlhJrfUUA
